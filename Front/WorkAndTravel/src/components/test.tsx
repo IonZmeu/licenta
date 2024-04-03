@@ -1,99 +1,103 @@
-import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
-import axios from "axios";
-import "./test.css";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-function auth(email1: string, password1: string) {
-  var body = {
-    email: email1,
-    password: password1,
-  };
 
-  axios
-    .post("http://localhost:4123/auth/authenticate", body)
-    .then(function (response) {
-      const token = response.data;
-      document.cookie = `jwtToken=${token}; path=/; secure; samesite=strict; HttpOnly`;
-      localStorage.setItem('token',JSON.stringify(token))
-      const stringifiedToken = localStorage.getItem('token');
-      if (stringifiedToken !== null) { // Check if token is not null////////////
-        console.log(JSON.parse(stringifiedToken));
-        window.location.reload()
-    } else {
-        console.log("Token not found in localStorage.");
-    }
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+interface Image {
+  id: number | string;
+  imageUrl: string;
 }
 
-function Test() {
+interface Job {
+  id: number | string;
+  name?: string;
+  email?: string;
+  lat_coordinate?: string;
+  long_coordinate?: string;
+  images?: Image[];
+}
 
-  if (localStorage.getItem('token') != null){
-    return <Navigate to='/' replace = {true} />
-  }
+const Test = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [imageData, setImageData] = useState<{ [key: string]: string }>({});
 
-  // State to hold form data
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await axios.get<Job[]>('http://localhost:4123/job');
+        setJobs(response.data);
+      } catch (error) {
+        console.log('Error fetching data: ', error);
+      }
+    };
 
-  // Function to handle input changes
-  const handleInputChange = (e: { target: { name: any; value: any } }) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    fetchJobs();
+  }, []);
+
+  const fetchImage = async (imageId: number | string): Promise<string | null> => {
+    try {
+      const response = await axios.get(`http://localhost:4123/image/${imageId}`);
+      return response.data; // Assuming backend returns the base64 string directly
+    } catch (error) {
+      console.log('Error fetching image: ', error);
+      return null;
+    }
   };
 
-  // Function to handle form submission
-  const handleSubmit = (e: { preventDefault: () => void }) => {
-    e.preventDefault();
-    auth(formData.email, formData.password);
-  };
+  useEffect(() => {
+    const fetchAllImages = async () => {
+      const imageDataMap: { [key: string]: string } = {};
+      for (const job of jobs) {
+        if (job.images && job.images.length > 0) {
+          for (const image of job.images) {
+            if (image.id) {
+              const imageData = await fetchImage(image.id);
+              if (imageData) {
+                imageDataMap[image.id.toString()] = imageData;
+              }
+            }
+          }
+        }
+      }
+      setImageData(imageDataMap);
+    };
+
+    fetchAllImages();
+  }, [jobs]);
 
   return (
-    <div className="grid-center" id="form-beauty">
-      <div className="form-box">
-        <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="exampleInputEmail1" className="form-label">
-                Email address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="form-control"
-                id="form-input"
-                aria-describedby="emailHelp"
+      <div className="container text-center">
+      <div className="row row-cols-auto">
+      {jobs.map((job, index) => (
+          <div className="col" key={index}>
+            <div className="card" id="card">
+              <img 
+                src={imageData[job.id.toString()]} 
+                className="card-img-top" 
+                alt="Job Image"
+                style={{ width: "100%px", height: "200px" }} // Set the width and height here
               />
+              <div className="card-body">
+                <h5 className="card-title">{job.name}</h5>
+                <p className="card-text">{job.email}</p>
+                <p className="card-text">{job.lat_coordinate}, {job.long_coordinate}</p>
+                <a href="#" className="btn btn-primary">Go somewhere</a>
+              </div>
             </div>
-          <div className="mb-3">
-            <label htmlFor="exampleInputPassword1" className="form-label">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="form-control"
-              id="form-input"
-            />
-            <div>New to the site? <a href="http://localhost:5173/Register">Register</a></div>
-            <button type="submit" className="btn btn-primary" id="login">
-              Log in
-            </button>
           </div>
-        </form>
+        ))}
+        <div className="col">
+        <div className="card" id="card">
+          <img src="src\assets\imgs\temp.png" className="card-img-top" alt="..."/>
+          <div className="card-body">
+            <h5 className="card-title">Card title</h5>
+            <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+            <a href="#" className="btn btn-primary">Go somewhere</a>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   );
-}
+};
 
 export default Test;

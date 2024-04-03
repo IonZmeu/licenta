@@ -108,7 +108,7 @@ const RegisterForm = () => {
             />
             <div>Already registered? <a href="http://localhost:5173/Login">Log in</a></div>
             <button type="submit" className="btn btn-primary" id="login">
-              Log in
+              Register
             </button>
           </div>
         </form>

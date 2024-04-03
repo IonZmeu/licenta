@@ -61,6 +61,11 @@ const Navbar = () => {
                     Jobs
                   </a>
                 </li>
+                <li>
+                  <a className="dropdown-item" href="/CreateJob">
+                    Create Job
+                  </a>
+                </li>
               </ul>
             </li>
           </ul>

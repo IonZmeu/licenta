@@ -1,7 +1,12 @@
 package com.personal.workandtravel.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.context.annotation.Lazy;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -25,21 +30,29 @@ public class JobEntity {
     private String name;
     private String email;
     private String country;
-    private String img;
-    private double lat_coordinate;
-    private double long_coordinate;
+    private String lat_coordinate;
+    private String long_coordinate;
+
+    @JsonManagedReference
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "job_id", referencedColumnName = "id")
+    private List<ImageEntity> images = new ArrayList<>();
 
 
     public JobEntity(String name) {
         this.name = name;
     }
+    public JobEntity(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
 
-    public JobEntity(String name, String email, String country,String img, double lat_coordinate, double long_coordinate) {
+    public JobEntity(String name, String email, String country, String lat_coordinate, String long_coordinate,List<ImageEntity> images) {
         this.name = name;
         this.email = email;
         this.country = country;
-        this.img = img;
         this.lat_coordinate = lat_coordinate;
         this.long_coordinate = long_coordinate;
+        this.images = images;
     }
 }

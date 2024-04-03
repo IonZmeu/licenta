@@ -8,6 +8,9 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Jobs from "./pages/Jobs";
+import CreateJob from "./pages/CreateJob";
+import axios from "axios";
+axios.defaults.baseURL = 'http://localhost:4123';
 
 function App() {
   return (
@@ -21,6 +24,7 @@ function App() {
         <Route path="/Login" element={<Login />} />
         <Route path="/Profile" element={<Profile />} />
         <Route path="/Jobs" element={<Jobs />} />
+        <Route path="/CreateJob" element={<CreateJob />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

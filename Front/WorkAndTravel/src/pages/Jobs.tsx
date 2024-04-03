@@ -1,46 +1,97 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-// import GoogleMapsComponent from './GoogleMapsComponent' // You would need to create this yourself or find a suitable library
 
+
+interface Image {
+  id: number | string;
+  imageUrl: string;
+}
+
+interface Job {
+  id: number | string;
+  name?: string;
+  email?: string;
+  lat_coordinate?: string;
+  long_coordinate?: string;
+  images?: Image[];
+}
 
 const Jobs = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [imageData, setImageData] = useState<{ [key: string]: string }>({});
 
-  type Post = {
-    email?: string;
-    name: string;
-    id: number | string;
-    lat_coordinate: number;
-    long_coordinate: number;
-  };
-
-  const [posts, setPosts] = useState<Post[]>([]);
-  
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchJobs = async () => {
       try {
-        const postsRes = await axios.get('http://localhost:4123/job');
-        setPosts(postsRes.data);
-        console.log(postsRes.data);
-       } catch (error) {
+        const response = await axios.get<Job[]>('http://localhost:4123/job');
+        setJobs(response.data);
+      } catch (error) {
         console.log('Error fetching data: ', error);
       }
     };
-    
-    fetchData();
+
+    fetchJobs();
   }, []);
+
+  const fetchImage = async (imageId: number | string): Promise<string | null> => {
+    try {
+      const response = await axios.get(`http://localhost:4123/image/${imageId}`);
+      return response.data; // Assuming backend returns the base64 string directly
+    } catch (error) {
+      console.log('Error fetching image: ', error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const fetchAllImages = async () => {
+      const imageDataMap: { [key: string]: string } = {};
+      for (const job of jobs) {
+        if (job.images && job.images.length > 0) {
+          for (const image of job.images) {
+            if (image.id) {
+              const imageData = await fetchImage(image.id);
+              if (imageData) {
+                imageDataMap[image.id.toString()] = imageData;
+              }
+            }
+          }
+        }
+      }
+      setImageData(imageDataMap);
+    };
+
+    fetchAllImages();
+  }, [jobs]);
   
+
   return (
     <div>
-      <h6>My Posts</h6>
-      {posts && posts.map(post => (
-      <div key={post.id}>
-        <h3>{post.name}</h3>
-        <p>Email: {post.email}</p>
-        <p>Id: {post.id}</p>
-        <p>Long numbers: {post.lat_coordinate}, {post.long_coordinate}</p>
-      </div>
-      ))}
-      
+      <h1>Jobs</h1>
+      <ul>
+        {jobs.map(job => (
+          <li key={job.id}>
+            <h3>{job.name}</h3>
+            <p>Email: {job.email}</p>
+            <p>Location: {job.lat_coordinate}, {job.long_coordinate}</p>
+            {job.images && job.images.length > 0 && (
+              <div>
+                <h4>Images</h4>
+                <ul>
+                  {job.images.map(image => (
+                    <li key={image.id}>
+                      {image.imageUrl}
+                      {image.id && imageData[image.id.toString()] && (
+                        <img src={imageData[image.id.toString()]} alt={`Image ${image.id}`} />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };

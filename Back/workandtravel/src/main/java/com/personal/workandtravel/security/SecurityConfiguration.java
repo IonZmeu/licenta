@@ -29,7 +29,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authz -> {
                     try {
                         authz
-                                .requestMatchers("auth/**", "job")
+                                .requestMatchers("auth/**", "job", "job/**","image/**","image")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated();
@@ -46,6 +46,7 @@ public class SecurityConfiguration {
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));  // Allow from this origin
                 config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));  // Allow these HTTP methods
+                config.setAllowedHeaders(Collections.singletonList("*"));  // Allow all headers
                 return config;
             });
         });
