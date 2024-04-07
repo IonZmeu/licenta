@@ -32,6 +32,11 @@ public class JobEntity {
     private String country;
     private String lat_coordinate;
     private String long_coordinate;
+    private String position;
+    private String salary;
+    private String description;
+    private String contact_info;
+
 
     @JsonManagedReference
     @OneToMany(cascade = CascadeType.ALL)
@@ -42,17 +47,17 @@ public class JobEntity {
     public JobEntity(String name) {
         this.name = name;
     }
-    public JobEntity(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
 
-    public JobEntity(String name, String email, String country, String lat_coordinate, String long_coordinate,List<ImageEntity> images) {
+    public JobEntity(String name, String email, String country, String lat_coordinate, String long_coordinate, String position, String salary, String description, String contact_info, List<ImageEntity> images) {
         this.name = name;
         this.email = email;
         this.country = country;
         this.lat_coordinate = lat_coordinate;
         this.long_coordinate = long_coordinate;
+        this.position = position;
+        this.salary = salary;
+        this.description = description;
+        this.contact_info = contact_info;
         this.images = images;
     }
 }

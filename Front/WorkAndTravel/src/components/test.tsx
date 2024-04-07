@@ -1,20 +1,40 @@
+// Inside the Test component
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import { Card } from 'react-bootstrap';
 
 
 interface Image {
   id: number | string;
   imageUrl: string;
+  imageType: string;
 }
 
 interface Job {
   id: number | string;
   name?: string;
-  email?: string;
-  lat_coordinate?: string;
-  long_coordinate?: string;
+  country?: string;
+  position?: string;
+  salary?: string;
+  description?: string;
   images?: Image[];
 }
+
+const EmptyCard: React.FC = () => {
+  return (
+    <Col md={"auto"} style={{ padding: "10px" }}>
+      <Card style={{ width: '22rem', margin: '0 auto', border: 'none' }}>
+        <Card.Body style={{ visibility: 'hidden' }}>
+          Placeholder
+        </Card.Body>
+      </Card>
+    </Col>
+  );
+};
 
 const Test = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -25,6 +45,7 @@ const Test = () => {
       try {
         const response = await axios.get<Job[]>('http://localhost:4123/job');
         setJobs(response.data);
+        console.log(jobs);
       } catch (error) {
         console.log('Error fetching data: ', error);
       }
@@ -43,13 +64,17 @@ const Test = () => {
     }
   };
 
+  const handleCardClick = (id: string | number) => {
+    console.log("Clicked ID:", id);
+  };
+
   useEffect(() => {
     const fetchAllImages = async () => {
       const imageDataMap: { [key: string]: string } = {};
       for (const job of jobs) {
         if (job.images && job.images.length > 0) {
           for (const image of job.images) {
-            if (image.id) {
+            if (image.id && image.imageType === "1") {
               const imageData = await fetchImage(image.id);
               if (imageData) {
                 imageDataMap[image.id.toString()] = imageData;
@@ -64,39 +89,60 @@ const Test = () => {
     fetchAllImages();
   }, [jobs]);
 
+  // Calculate the number of empty slots needed to maintain the grid structure
+  
+
+
+
+
+  const emptySlotsCount = 24 - jobs.length;
+
+  useEffect(() => {
+    const handleResize = () => {
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup function to remove event listener
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  
   return (
-      <div className="container text-center">
-      <div className="row row-cols-auto">
-      {jobs.map((job, index) => (
-          <div className="col" key={index}>
-            <div className="card" id="card">
-              <img 
-                src={imageData[job.id.toString()]} 
-                className="card-img-top" 
-                alt="Job Image"
-                style={{ width: "100%px", height: "200px" }} // Set the width and height here
-              />
-              <div className="card-body">
-                <h5 className="card-title">{job.name}</h5>
-                <p className="card-text">{job.email}</p>
-                <p className="card-text">{job.lat_coordinate}, {job.long_coordinate}</p>
-                <a href="#" className="btn btn-primary">Go somewhere</a>
+    <Container fluid className="container-no-padding" style={{overflowX: 'hidden'}}>
+      <Row className='grid'>
+        {/* Render job cards */}
+        {jobs.map((job, index) => {
+          const imageId = job.images?.find(image => image.imageType === "1")?.id;
+          const imageUrl = imageData[imageId?.toString() || ''];
+
+          return (
+            <Col key={index} md={"auto"} style={{ padding: "10px" }}>
+              <div onClick={() => handleCardClick(job.id)}> {/* Add onClick handler */}
+                <Card className='non-empty-card' style={{ width: '22rem', margin: '0 auto' }}>
+                  <Card.Img variant="top" src={imageUrl} style={{ width: "100%", height: "250px" }} alt={"1"} />
+                  <Card.Body>
+                    <Card.Title style={{ textAlign: "center", fontWeight: 'bold' }}>{job.name}</Card.Title>
+                    <Card.Text className='card-text'><span style={{fontWeight: 'bold'}}>Country:</span> {job.country}</Card.Text>
+                    <Card.Text className='card-text'><span style={{fontWeight: 'bold'}}>Position:</span> {job.position}</Card.Text>
+                    <Card.Text className='card-text'><span style={{fontWeight: 'bold'}}>Salary:</span> {job.salary}</Card.Text>
+                    <Card.Text className='card-text'>
+                    <span style={{fontWeight: 'bold'}}>About us: </span>{job.description && job.description.length > 150 ? job.description.substring(0, 150) + "..." : job.description }
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
               </div>
-            </div>
-          </div>
+            </Col>
+          );
+        })}
+        {/* Render empty slots */}
+        {[...Array(emptySlotsCount)].map((_, index) => (
+          <EmptyCard key={index} />
         ))}
-        <div className="col">
-        <div className="card" id="card">
-          <img src="src\assets\imgs\temp.png" className="card-img-top" alt="..."/>
-          <div className="card-body">
-            <h5 className="card-title">Card title</h5>
-            <p className="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
-            <a href="#" className="btn btn-primary">Go somewhere</a>
-          </div>
-        </div>
-      </div>
-      </div>
-    </div>
+      </Row>
+    </Container>
   );
 };
 

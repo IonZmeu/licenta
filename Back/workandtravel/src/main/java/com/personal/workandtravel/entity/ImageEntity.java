@@ -25,6 +25,7 @@ public class ImageEntity {
             generator = "img_sequence"
     )
     private Long id;
+    private String imageType;
     private String imageUrl;
 
     @JsonBackReference
@@ -34,5 +35,10 @@ public class ImageEntity {
 
     public ImageEntity(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public ImageEntity(String imageUrl, String imageType) {
+        this.imageUrl = imageUrl;
+        this.imageType = imageType;
     }
 }

@@ -41,20 +41,31 @@ public class JobController {
             @RequestParam("email") String email,
             @RequestParam("name") String name,
             @RequestParam("country") String country,
+            @RequestParam("position") String position,
+            @RequestParam("salary") String salary,
+            @RequestParam("description") String description,
+            @RequestParam("contact_info") String contact_info,
             @RequestParam("long_coordinate") String long_coordinate,
             @RequestParam("lat_coordinate") String lat_coordinate,
-            @RequestPart("images") MultipartFile[] images) throws IOException {
+            @RequestPart("main_image") MultipartFile main_image,
+            @RequestPart("secondary_images") MultipartFile[] secondary_images) throws IOException {
 
         System.out.println("called on job post");
         System.out.println(long_coordinate + " " + lat_coordinate);
         List<ImageEntity> imagePaths = new ArrayList<>();
-        for(MultipartFile image : images){
+        for(MultipartFile image : secondary_images){
             String uuid = UUID.randomUUID().toString();
-            imagePaths.add(new ImageEntity(uuid));
+            imagePaths.add(new ImageEntity(uuid,"0"));
             File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
             image.transferTo(file);  // Save the uploaded file to your local directory
         }
-        jobService.addNewJob(new JobEntity(name,email,country,lat_coordinate,long_coordinate,imagePaths));
+
+        String uuid = UUID.randomUUID().toString();
+        imagePaths.add(new ImageEntity(uuid,"1"));
+        File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
+        main_image.transferTo(file);
+
+        jobService.addNewJob(new JobEntity(name, email, country, lat_coordinate, long_coordinate, position, salary, description, contact_info, imagePaths));
 
 
         return "Form submission received";
