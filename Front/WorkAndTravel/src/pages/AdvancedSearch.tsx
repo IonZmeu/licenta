@@ -1,8 +1,8 @@
 import React from "react";
-import Test from "../components/test";
+import AdvancedSearchComponent from "../components/AdvancedSearchComponent";
 
 const AdvancedSearch = () => {
-  return <Test />;
+  return <AdvancedSearchComponent />;
 };
 
 export default AdvancedSearch;

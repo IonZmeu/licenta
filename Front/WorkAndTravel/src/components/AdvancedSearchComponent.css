@@ -1,0 +1,30 @@
+.col{
+    padding-top: 10px;
+}
+
+.container-no-padding {
+    margin: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.non-empty-card{
+    box-shadow: 3px 3px lightgray;
+}
+
+.non-empty-card:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 1s ease, opacity 0.5s ease, box-shadow 0.3s ease;
+}
+
+
+
+.card-text{
+    margin-bottom: 5px; 
+    text-align: left;
+    
+}
+
+/*mind there are css from className="form-control" from bootstrap

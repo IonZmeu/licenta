@@ -28,10 +28,15 @@ public class ImageEntity {
     private String imageType;
     private String imageUrl;
 
-    @JsonBackReference
+    @JsonBackReference(value = "job-images")
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "job_id", referencedColumnName = "id")
     private JobEntity job;
+
+    @JsonBackReference(value = "thread-images")
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "thread_id", referencedColumnName = "id")
+    private ThreadEntity thread;
 
     public ImageEntity(String imageUrl) {
         this.imageUrl = imageUrl;
@@ -40,5 +45,11 @@ public class ImageEntity {
     public ImageEntity(String imageUrl, String imageType) {
         this.imageUrl = imageUrl;
         this.imageType = imageType;
+    }
+
+    public ImageEntity(String imageUrl, String imageType, ThreadEntity thread) {
+        this.imageUrl = imageUrl;
+        this.imageType = imageType;
+        this.thread = thread;
     }
 }

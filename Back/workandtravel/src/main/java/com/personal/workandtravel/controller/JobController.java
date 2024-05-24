@@ -1,10 +1,13 @@
 package com.personal.workandtravel.controller;
 
+import com.personal.workandtravel.dto.JobDTO;
+import com.personal.workandtravel.dto.JobRequestDTO;
 import com.personal.workandtravel.entity.ImageEntity;
 import com.personal.workandtravel.entity.JobEntity;
 import com.personal.workandtravel.service.JobService;
 import lombok.Data;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,56 +23,63 @@ import java.util.UUID;
 public class JobController {
 
     private final JobService jobService;
-
-    @GetMapping( value = "/test")
-    public String tests() {
-        String names = "";
-        for (JobEntity job : jobService.getJobs()) {
-            names += job.getName() + " ";
-        }
-        return "You accessed the job controller!" + names;}
-
-
-    @GetMapping
-    public List<JobEntity> getJobs() {
-        return jobService.getJobs();
+    @GetMapping(value = "/{id}")
+    public JobEntity getJob(@PathVariable("id") Long id) {
+        return jobService.getJob(id);
     }
 
+    @GetMapping(value = "/pages")
+    public String getPages() {
+        return jobService.getTotalPages();
+    }
+
+    @GetMapping( value = "/page/{page}")
+    public List<JobDTO> getJobsPage(@PathVariable("page") String page) {
+        List<JobDTO> jobs = jobService.getPageDTO(page);
+        return jobs;
+    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public String addNewJob(
-            @RequestParam("email") String email,
-            @RequestParam("name") String name,
-            @RequestParam("country") String country,
-            @RequestParam("position") String position,
-            @RequestParam("salary") String salary,
-            @RequestParam("description") String description,
-            @RequestParam("contact_info") String contact_info,
-            @RequestParam("long_coordinate") String long_coordinate,
-            @RequestParam("lat_coordinate") String lat_coordinate,
-            @RequestPart("main_image") MultipartFile main_image,
-            @RequestPart("secondary_images") MultipartFile[] secondary_images) throws IOException {
+    public String addNewJob(@ModelAttribute JobRequestDTO jobRequest) throws IOException {
 
         System.out.println("called on job post");
-        System.out.println(long_coordinate + " " + lat_coordinate);
+        System.out.println(jobRequest.toString());
+        System.out.println(jobRequest.getLongCoordinate() + " " + jobRequest.getLatCoordinate());
+
         List<ImageEntity> imagePaths = new ArrayList<>();
-        for(MultipartFile image : secondary_images){
+
+        for (MultipartFile image : jobRequest.getSecondaryImages()) {
             String uuid = UUID.randomUUID().toString();
-            imagePaths.add(new ImageEntity(uuid,"0"));
+            imagePaths.add(new ImageEntity(uuid, "0"));
             File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
             image.transferTo(file);  // Save the uploaded file to your local directory
         }
 
         String uuid = UUID.randomUUID().toString();
-        imagePaths.add(new ImageEntity(uuid,"1"));
+        imagePaths.add(new ImageEntity(uuid, "1"));
         File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
-        main_image.transferTo(file);
+        jobRequest.getMainImage().transferTo(file);
 
-        jobService.addNewJob(new JobEntity(name, email, country, lat_coordinate, long_coordinate, position, salary, description, contact_info, imagePaths));
-
+        jobService.addNewJob(new JobEntity(
+                jobRequest.getName(),
+                jobRequest.getEmail(),
+                jobRequest.getCountry(),
+                jobRequest.getLatCoordinate(),
+                jobRequest.getLongCoordinate(),
+                jobRequest.getJob(),
+                jobRequest.getSalary(),
+                jobRequest.getCurrency(),
+                jobRequest.getDescription(),
+                jobRequest.getContactInfo(),
+                imagePaths
+        ));
 
         return "Form submission received";
     }
-    
+
+    @PostMapping(value = "/hi")
+    public String hi() {
+        return "Hi";
+    }
 
 }

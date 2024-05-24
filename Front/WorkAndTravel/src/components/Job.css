@@ -1,0 +1,3 @@
+.slick-dots li.slick-active button:before {
+    color: darkcyan; /* Change the dot active color */
+}

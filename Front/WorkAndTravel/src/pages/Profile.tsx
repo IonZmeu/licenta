@@ -8,7 +8,7 @@ function Logout() {
 const Profile = () => {
   if  (localStorage.getItem('token') != null){
     return <div>
-    <button onClick={() => Logout()}>Logout button</button>
+    profile emptz
   </div>;
   }
   

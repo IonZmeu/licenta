@@ -1,5 +1,6 @@
 package com.personal.workandtravel.service;
 
+import com.personal.workandtravel.entity.JobEntity;
 import com.personal.workandtravel.entity.UserEntity;
 import com.personal.workandtravel.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -63,6 +64,13 @@ public class UserService {
             }
             user.setEmail(email);
         }
+    }
+
+    public UserEntity getUser(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalStateException(
+                        "user with id " + id + " does not exist"
+                ));
     }
 }
 

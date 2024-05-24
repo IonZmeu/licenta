@@ -9,23 +9,19 @@ function auth(email1: string, password1: string) {
     password: password1,
   };
 
-  axios
-    .post("http://localhost:4123/auth/register", body)
-    .then(function (response) {
-      const token = response.data;
-      document.cookie = `jwtToken=${token}; path=/; secure; samesite=strict; HttpOnly`;
-      localStorage.setItem('token',JSON.stringify(token))
-      const stringifiedToken = localStorage.getItem('token');
-      if (stringifiedToken !== null) { // Check if token is not null////////////
-        console.log(JSON.parse(stringifiedToken));
-        window.location.reload()
-    } else {
-        console.log("Token not found in localStorage.");
-    }
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+  axios.post("http://localhost:4123/auth/register", body)
+  .then(function (response) {
+    const { token, userId, username } = response.data; // Extract token and userId from response.data
+    document.cookie = `jwtToken=${token}; path=/; secure; samesite=strict; HttpOnly`;
+    localStorage.setItem('token', JSON.stringify(token));
+    localStorage.setItem('userId', userId); // Store userId in localStorage
+    localStorage.setItem('username', username);
+
+    window.location.reload(); // Example: reload the window
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
 }
 
 const RegisterForm = () => {
@@ -67,20 +63,20 @@ const RegisterForm = () => {
     <div className="grid-center" id="form-beauty">
       <div className="form-box">
         <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="exampleInputEmail1" className="form-label">
-                Email address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="form-control"
-                id="form-input"
-                aria-describedby="emailHelp"
-              />
-            </div>
+          <div className="mb-3">
+            <label htmlFor="exampleInputEmail1" className="form-label">
+              Email address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className="form-control"
+              id="form-input"
+              aria-describedby="emailHelp"
+            />
+          </div>
           <div className="mb-3">
             <label htmlFor="InputPassword" className="form-label">
               Password
@@ -94,6 +90,20 @@ const RegisterForm = () => {
               id="form-input"
             />
           </div>
+          <div className="mb-3">
+              <label htmlFor="exampleInputUsername" className="form-label">
+                Username
+              </label>
+              <input
+                type="username"
+                name="username"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="form-control"
+                id="form-input"
+                aria-describedby="usernameHelp"
+              />
+            </div>
           <div className="mb-3">
             <label htmlFor="InputPasswordRepeat" className="form-label">
               Repeat password

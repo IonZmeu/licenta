@@ -8,22 +8,31 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
-  "proxy":"http://localhost:4123",
+  "proxy": "http://localhost:4123",
   "dependencies": {
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.15.17",
+    "@mui/material": "^5.15.18",
     "@react-google-maps/api": "^2.19.3",
+    "@types/react-slick": "^0.23.13",
     "axios": "^1.6.5",
     "bootstrap": "^5.3.3",
+    "country-list": "^2.3.0",
+    "currency-codes-ts": "^3.0.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.1",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.21.1"
+    "react-router-dom": "^6.21.1",
+    "react-slick": "^0.30.2",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
+    "@types/country-list": "^2.1.4",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
     "@vitejs/plugin-react": "^3.1.0",
     "typescript": "^4.9.3",
     "vite": "^4.1.0"
   }
-
 }

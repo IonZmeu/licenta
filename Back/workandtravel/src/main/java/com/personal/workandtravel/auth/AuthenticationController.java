@@ -1,7 +1,9 @@
 package com.personal.workandtravel.auth;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -21,15 +23,19 @@ public class AuthenticationController {
     }
 
     @PostMapping("authenticate")
+
     public ResponseEntity<AuthenticationResponse> authenticate(
             @RequestBody AuthenticationRequest request
     ){
         return ResponseEntity.ok(service.authenticate(request));
     }
 
-    @PostMapping("hello")
-    public void hello(
-    ){
-        System.out.println("called on /hello");
+    @GetMapping("/userId")
+    public String getUserId(@RequestParam("jwtToken") String jwtToken) {
+        return service.getUserIdFromToken(jwtToken).toString();
+    }
+    @GetMapping()
+    public String getUserId() {
+        return "hi";
     }
 }

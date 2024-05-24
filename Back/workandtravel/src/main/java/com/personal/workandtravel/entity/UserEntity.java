@@ -1,11 +1,13 @@
 package com.personal.workandtravel.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -28,14 +30,27 @@ public class UserEntity implements UserDetails {
     )
 
     private Long id;
+    private String username;
     private String email;
     private String password;
     private String role = "USER";
 
-    public UserEntity(String email, String password) {
+    public UserEntity(String username,String email, String password) {
+        this.username = username;
         this.email = email;
         this.password = password;
     }
+
+    @JsonManagedReference(value = "user-comments")
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private List<CommentEntity> comments = new ArrayList<>();
+
+    @JsonManagedReference(value = "author-threads")
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "author_id", referencedColumnName = "id")
+    private List<ThreadEntity> thread = new ArrayList<>();
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -44,7 +59,7 @@ public class UserEntity implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return username;
     }
 
     @Override

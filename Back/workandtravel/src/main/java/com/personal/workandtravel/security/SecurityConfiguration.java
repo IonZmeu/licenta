@@ -29,7 +29,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authz -> {
                     try {
                         authz
-                                .requestMatchers("auth/**", "job", "job/**","image/**","image")
+                                .requestMatchers("auth/**", "job", "job/**","image/**","image","comment","comment/**","thread","thread/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated();

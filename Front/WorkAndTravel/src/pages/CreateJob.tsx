@@ -1,8 +1,8 @@
 import React from "react";
-import JobForm from "../components/JobForm";
+import JobCreateForm from "../components/JobCreateForm";
 
 const CreateJob = () => {
-  return <JobForm/>;
+  return <JobCreateForm/>;
 };
 
 export default CreateJob;
