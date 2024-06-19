@@ -1,122 +1,66 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Modal } from "react-bootstrap";
 import { useParams } from "react-router-dom";
-import { LoadScript, GoogleMap, MarkerF  } from '@react-google-maps/api';
-import { Box, Button, Card, CardContent, CardHeader, Grid, Hidden, IconButton, Paper, TextField, Typography } from "@mui/material";
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
-import "../components/Job.css";
+import { Box, Grid, Typography } from "@mui/material";
+import ImageSlider from '../components/ImageSlider';
+import { CommentSection } from '../components/CommentSectionComponent';
+import { GoogleMapsComponent } from "../components/GoogleMapsComponent";
+import { Job, CommentDTO, Comment } from '../interfaces/types';
+import { Actions } from '../components/ActionsBarComponent';
+import { handleDislikeComment, handleLikeComment } from "../functions/functions";
 
-
-interface Image {
-  id: number;
-  imageUrl: string;
-  imageType: string;
-}
-
-interface Job {
-  id: number;
-  name?: string;
-  email?: string;
-  country?: string;
-  latCoordinate: string;
-  longCoordinate: string;
-  job?: string;
-  salary?: string;
-  currnecy?: string;
-  description?: string;
-  contactInfo?:string;
-  images?: Image[];
-  comments?: Comment[];
-}
-
-interface Comment {
-  id: number;
-  jobId:number | null;
-  threadId:number | null;
-  userId:number;
-  parentId:number | null;
-  depth:number;
-  username:string;
-  commentContent:string;
-  children: Comment[] | null;
-}
-
-function Job() {
+const JobPage = () => {
   let { id } = useParams();
 
   const [job, setJob] = useState<Job | null>(null);
   const [allImageData, setAllImageData] = useState<{ [key: string]: string }>({});
-  const [showImageModal, setShowImageModal] = useState<boolean>(false);
-  const [selectedImage, setSelectedImage] = useState<string>("");
   const [commentText, setCommentText] = useState<string>("");
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [replyComment, setReplyComment] = useState<Comment | null>(null);
-  const NextArrow = (props: any) => {
-    const { className, style, onClick } = props;
-    return (
-      <IconButton
-        className={className}
-        onClick={onClick}
-        sx={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          '&:active, &:focus': { backgroundColor: 'rgba(0, 0, 0, 0.5)' }, // Prevent background color change after click and maintain color on focus
-          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)' }, // Apply hover effect
-          color: 'white',
-          position: 'absolute',
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 1,
-          width: 60,  // Increased size
-          height: 60, // Increased size
-        }}
-      >
-      </IconButton>
-    );
+  const [commentsDTO, setCommentsDTO] = useState<CommentDTO[]>([]);
+  const [replyComment, setReplyComment] = useState<CommentDTO | null>(null);
+  const [followedJobs, setFollowedJobs] = useState<number[]>([]);
+  const [likedJobs, setLikedJobs] = useState<number[]>([]);
+  const [dislikedJobs, setDislikedJobs] = useState<number[]>([]);
+  const [likedJobComments, setLikedJobComments] = useState<number[]>([]);
+  const [dislikedJobComments, setDislikedJobComments] = useState<number[]>([]);
+  const [selectCommentInput, setSelectCommentInput] = useState<boolean>(false);
+  const [updateComments, setupdateComments] = useState<boolean>(false);
+  const onImageClick = () => {
+    console.log('Clicked on image');
   };
 
-  const PrevArrow = (props: any) => {
-    const { className, style, onClick } = props;
-    return (
-      <IconButton
-        className={className}
-        onClick={onClick}
-        sx={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          '&:active, &:focus': { backgroundColor: 'rgba(0, 0, 0, 0.5)' }, // Prevent background color change after click and maintain color on focus
-          '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)' }, // Apply hover effect
-          color: 'white',
-          position: 'absolute',
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 1,
-          width: 60,  // Increased size
-          height: 60, // Increased size
-          display: 'flex', // Ensure the display remains as flex
-        }}
-      >
-        
-      </IconButton>
-    );
+  const handleCommentClick = () => {
+    setSelectCommentInput(true); // Function to select comment input
   };
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    scroll: false,
-    nextArrow: <NextArrow />,
-    prevArrow: <PrevArrow />,
-    adaptiveHeight: true,
-    draggable: false
+  const handleFollowJob = () => {
+    // Follow job logic
   };
 
-  
+  const fetchComments = async () => {
+    try {
+      const response = await axios.get<CommentDTO[]>(`http://localhost:4123/comment/jobDTO/${id}`);
+      setCommentsDTO(response.data);
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    }
+  };
+
+  const fetchCommentsActions = async () => {
+    try {
+      const likedResponse = await axios.get(`http://localhost:4123/user/${Number(localStorage.getItem('userId'))}/liked-comments`);
+      const likedJobCommentsIds = likedResponse.data;
+      setLikedJobComments(likedJobCommentsIds);
+      const dislikedResponse = await axios.get(`http://localhost:4123/user/${Number(localStorage.getItem('userId'))}/disliked-comments`);
+      const dislikedCommentsIds = dislikedResponse.data;
+      setDislikedJobComments(dislikedCommentsIds);
+      console.log("liked and disliked");
+      console.log(likedJobCommentsIds);
+      console.log(dislikedCommentsIds);
+    } catch (error) {
+      console.log('Error fetching data: ', error);
+    }
+  };
+
   useEffect(() => {
     const fetchJob = async () => {
       try {
@@ -127,8 +71,42 @@ function Job() {
       }
     };
 
+
+
+    const fetchUserActions = async () => {
+      try {
+        setDislikedJobs([]);
+        setLikedJobs([]);
+        setFollowedJobs([]);
+        // Fetch followed jobs
+        const followedResponse = await axios.get(`http://localhost:4123/user/${Number(localStorage.getItem('userId'))}/followed-jobs`);
+        const followedJobIds = followedResponse.data;
+        setFollowedJobs(followedJobIds);
+
+        // Fetch liked jobs
+        const likedResponse = await axios.get(`http://localhost:4123/user/${Number(localStorage.getItem('userId'))}/liked-jobs`);
+        const likedJobIds = likedResponse.data;
+        setLikedJobs(likedJobIds);
+
+        // Fetch disliked jobs
+        const dislikedResponse = await axios.get(`http://localhost:4123/user/${Number(localStorage.getItem('userId'))}/disliked-jobs`);
+        const dislikedJobIds = dislikedResponse.data;
+        setDislikedJobs(dislikedJobIds);
+
+      } catch (error) {
+        console.log('Error fetching user actions:', error);
+      }
+    };
+
+    fetchComments();
+    fetchCommentsActions();
     fetchJob();
-  }, []);
+    fetchUserActions();
+  }, [id]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [updateComments]);
 
   const fetchImage = async (imageId: number | string): Promise<string | null> => {
     try {
@@ -139,7 +117,6 @@ function Job() {
       return null;
     }
   };
-
 
   useEffect(() => {
     const fetchAllImages = async () => {
@@ -157,6 +134,8 @@ function Job() {
       setAllImageData(allImageDataMap);
     };
 
+
+
     fetchAllImages();
   }, [job]);
 
@@ -166,197 +145,124 @@ function Job() {
 
   const handleCommentSubmit = async () => {
     try {
-      const userId = localStorage.getItem('userId') || ''; 
-      const username = localStorage.getItem('username') || '';
-      const response = await axios.post("http://localhost:4123/comment", {
+      const userId = localStorage.getItem('userId');
+      const username = localStorage.getItem('username');
+      if (!userId || !username) {
+        throw new Error('User not authenticated.');
+      }
+
+      const response = await axios.post<CommentDTO>("http://localhost:4123/comment", {
         jobId: id,
         threadId: null,
-        userId: userId,
+        userId: Number(userId),
         parentId: replyComment?.id,
-        depth: replyComment?.depth || 0,
+        depth: replyComment ? replyComment.depth + 1 : 0,
         commentContent: commentText,
         username: username,
       });
 
-      const responseComments = await axios.get(`http://localhost:4123/comment/job/${id}`);
-
-      if (job) {
-        setJob({ ...job, comments: responseComments.data });
-      }
-
       setCommentText("");
+      setReplyComment(null);
+      if (updateComments === false) {
+        setupdateComments(true);
+      } else {
+        setupdateComments(false);
+      }
     } catch (error) {
-      console.log("Error submitting comment: ", error);
+      console.log("Error submitting comment:", error);
     }
-  };
-
-  const openImageModal = (imageUrl: string) => {
-    setShowImageModal(true);
-    setSelectedImage(imageUrl);
-  };
-
-  const closeImageModal = () => {
-    setShowImageModal(false);
-    setSelectedImage("");
-  };
-
-  const mapStyles = {        
-    height: "600px",
-    width: "100%"
   };
 
   const stopReplying = () => {
     setCommentText("");
     setReplyComment(null);
-  }
-
-  const handleReply = async (comment: Comment) => {
-    setReplyComment(comment);
   };
 
-  const CommentComponent: React.FC<{ comment: Comment }> = ({ comment }) => {
-    return (
-      <div style={{ marginLeft: `${comment.depth * 20}px`, borderLeft: '2px solid #ccc', padding: '5px', marginBottom: '10px' }}>
-        <p>By: {comment.username}</p>
-        {comment.children && comment.children.map(child => (
-          <CommentComponent key={child.id} comment={child} />
-        ))}
-        <p>{comment.commentContent}</p>
-        <button onClick={() =>handleReply(comment)}>Reply</button>
-      </div>
-    );
+  const handleReply = (comment: CommentDTO) => {
+    setReplyComment({
+      ...comment,
+      depth: comment.depth + 1,
+    });
   };
+
 
   return (
-      <div style={{margin: '20px 15% 0'}}>
-        
-        <Typography variant="h5" component="div" sx={{ fontWeight: 'bold', textAlign: 'center', marginBottom: 3, fontSize: '2.5rem' }}>
-          {job?.name}
-        </Typography>
+    <div style={{ margin: '20px 15% 0' }}>
+      <Typography variant="h3" component="div" sx={{ fontWeight: 'bold', textAlign: 'center', marginBottom: 3, fontSize: '2.5rem' }}>
+        {job?.name}
+      </Typography>
 
-        <Grid container>
-         <Grid item xs={12} sx={{marginBottom: "20px"}}>
-            {job && (
-              <Box sx={{ backgroundColor: 'transparent', maxWidth: '100%', mx: 'auto', my: 4 }}>
-              <Slider {...settings}>
-                {Object.entries(allImageData).map(([id, imageUrl]) => (
-                  <Box key={id} onClick={() => openImageModal(imageUrl)} sx={{ cursor: 'pointer' }}>
-                    <img
-                      src={imageUrl}
-                      alt={`Image ${id}`}
-                      style={{ objectFit: 'contain', height: '600px', width: '100%' }}
-                    />
-                  </Box>
-                ))}
-              </Slider>
+      <Grid container>
+        <Grid item xs={12} sx={{ marginBottom: '20px' }}>
+          {job && (
+            <Box sx={{ backgroundColor: 'transparent', maxWidth: '100%', mx: 'auto', my: 4 }}>
+              {/* Assuming ImageSlider component */}
+              <ImageSlider imageUrls={Object.values(allImageData)} onImageClick={onImageClick} />
             </Box>
-            )}
-          </Grid> 
-          <Grid item xs={6}>
-              {job && (
-                <LoadScript googleMapsApiKey='AIzaSyAID844FYzOtqurEPyxm9ooZiF2s05llL0'>
-                  <GoogleMap 
-                    center={{ lat: parseFloat(job.latCoordinate), lng: parseFloat(job.longCoordinate) }}
-                    mapContainerStyle={mapStyles}
-                    zoom={15}>
-                    <MarkerF position={{ lat: parseFloat(job.latCoordinate), lng: parseFloat(job.longCoordinate) }} 
-                    />
-                  </GoogleMap>
-                </LoadScript>
-              )}
-          </Grid>
-          <Grid item xs={6}>
-            <Paper elevation={3} sx={{ padding: 2, marginBottom: 1, width: "100%", height: "100%" }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                <strong>Email:</strong> {job?.email}
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                <strong>Country:</strong> {job?.country}
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                <strong>Position:</strong> {job?.job}
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                <strong>Salary:</strong> {job?.salary}
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                <strong>Contact Info:</strong> {job?.contactInfo}
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                <strong>Description:</strong> {job?.description}
-              </Typography>
-            </Paper>
-          </Grid>
-          <Grid item >
-            <Box sx={{ margin: "auto",  }}>
-              <Card variant="outlined" sx={{ marginBottom: 2 }}>
-                <CardHeader title="Comments" />
-                <CardContent>
-                
-                  {replyComment ? 
-                  <Grid container spacing={1} alignItems="flex-start">
-                  <Grid item xs={12} md={12} lg={12} xl={12}>
-                  <Typography style={{marginTop: '10px', fontSize: '14px'}}>
-                    Replying to: <b>{replyComment.username}</b> {" "} his message:
-                      {" " + (replyComment.commentContent.length > 50 ? `${replyComment.commentContent.slice(0, 47)}...` : replyComment.commentContent)}
-                      <button onClick={stopReplying}>stop replying </button>
-                  </Typography> 
-
-                  </Grid>
-                  <Grid item xs={10} md={10} lg={10} xl={10}>
-                  <TextField
-                      label="Write a comment"
-                      multiline
-                      fullWidth
-                      value={commentText}
-                      onChange={handleCommentChange}
-                      sx={{ marginBottom: 2 }}
-                      />
-                  </Grid>
-                  <Grid item xs={2} md={2} lg={2} xl={2}>
-                      <Button sx={{ height: "100%", padding: 2 }} variant="contained" onClick={handleCommentSubmit} fullWidth>
-                          Submit
-                      </Button>
-                  </Grid>
-                  </Grid> :
-                  <Grid container spacing={1} alignItems="flex-start">
-                  <Grid item xs={10} md={10} lg={10} xl={10}>
-                  <TextField
-                      label="Write a comment"
-                      multiline
-                      fullWidth
-                      value={commentText}
-                      onChange={handleCommentChange}
-                      sx={{ marginBottom: 2 }}
-                      />
-                  </Grid>
-                  <Grid item xs={2} md={2} lg={2} xl={2}>
-                      <Button sx={{ height: "100%", padding: 2 }} variant="contained" onClick={handleCommentSubmit} fullWidth>
-                          Submit
-                      </Button>
-                  </Grid>
-                  </Grid>
-                  }
-              
-                  {job && job.comments && (
-                    job.comments
-                      .filter(comment => comment.depth === 0)
-                      .map(comment => <CommentComponent key={comment.id} comment={comment} />)
-                  )}
-                </CardContent>
-              </Card>
-            </Box>
-          </Grid>
+          )}
         </Grid>
 
-        <Modal show={showImageModal} onHide={closeImageModal} centered>
-          <Modal.Body>
-            <img src={selectedImage} alt="Selected Image" style={{ maxWidth: "100%", maxHeight: "100%" }} />
-          </Modal.Body>
-        </Modal>
+        <Grid item xs={6}>
+          {job && <GoogleMapsComponent latCoordinate={job.latCoordinate} longCoordinate={job.longCoordinate} />}
+        </Grid>
 
-      </div>
+        <Grid item xs={6}>
+          <Box display="flex" flexDirection="column" height="100%" justifyContent="space-between">
+            <Box>
+              <Typography variant="body1" sx={{ marginBottom: 1, paddingLeft: 2 }}>
+                <strong>Email:</strong> {job?.email}
+              </Typography>
+              <Typography variant="body1" sx={{ marginBottom: 1, paddingLeft: 2 }}>
+                <strong>Country:</strong> {job?.country}
+              </Typography>
+              <Typography variant="body1" sx={{ marginBottom: 1, paddingLeft: 2 }}>
+                <strong>Position:</strong> {job?.job}
+              </Typography>
+              <Typography variant="body1" sx={{ marginBottom: 1, paddingLeft: 2 }}>
+                <strong>Salary:</strong> {job?.salary} {job?.currency}
+              </Typography>
+              <Typography variant="body1" sx={{ marginBottom: 1, paddingLeft: 2 }}>
+                <strong>Contact Info:</strong> {job?.contactInfo}
+              </Typography>
+              <Typography variant="body1" sx={{ marginBottom: 1, paddingLeft: 2 }}>
+                <strong>Description:</strong> {job?.description}
+              </Typography>
+            </Box>
+            <Box>
+              {job && (
+                <Actions
+                  job={job}
+                  likedJobs={likedJobs}
+                  dislikedJobs={dislikedJobs}
+                  followedJobs={followedJobs}
+                  setLikedJobs={setLikedJobs}
+                  setDislikedJobs={setDislikedJobs}
+                  setFollowedJobs={setFollowedJobs}
+                  handleCardClick={handleCommentClick}
+                />
+              )}
+            </Box>
+          </Box>
+        </Grid>
+
+        <CommentSection
+          jobComments={commentsDTO}
+          handleReply={handleReply}
+          handleCommentSubmit={handleCommentSubmit}
+          handleCommentChange={handleCommentChange}
+          stopReplying={stopReplying}
+          commentText={commentText}
+          replyComment={replyComment}
+          likedComments={likedJobComments}
+          setLikedComments={setLikedJobComments}
+          dislikedComments={dislikedJobComments}
+          setDislikedComments={setDislikedJobComments}
+        />
+
+      </Grid>
+    </div>
   );
+
 }
 
-export default Job;
+export default JobPage;

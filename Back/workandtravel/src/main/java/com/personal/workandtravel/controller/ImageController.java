@@ -33,6 +33,27 @@ public class ImageController{
                 String base64EncodedImage = Base64.getEncoder().encodeToString(fileContent);
                 return Optional.of("data:image/jpeg;base64," + base64EncodedImage);
             } catch (IOException e) {
+                System.out.println("Error reading image file");
+                e.printStackTrace();
+                // Handle exception appropriately
+            }
+        }
+        return Optional.empty();
+    }
+
+    @GetMapping( value = "/pfp/{id}")
+    public Optional<String> getProfileImage(@PathVariable("id") Long id) {
+        String uuid = imageService.getProfileImageFromUserId(id);
+        String imagePath = "C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg";
+
+        File imageFile = new File(imagePath);
+        if (imageFile.exists()) {
+            try {
+                byte[] fileContent = FileCopyUtils.copyToByteArray(imageFile);
+                String base64EncodedImage = Base64.getEncoder().encodeToString(fileContent);
+                return Optional.of("data:image/jpeg;base64," + base64EncodedImage);
+            } catch (IOException e) {
+                System.out.println("Error reading image file");
                 e.printStackTrace();
                 // Handle exception appropriately
             }

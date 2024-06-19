@@ -1,5 +1,6 @@
 package com.personal.workandtravel.dto;
 
+import com.personal.workandtravel.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ public class JobRequestDTO {
     private String name;
     private String country;
     private String job;
-    private String salary;
+    private double salary;
     private String currency;
     private String description;
     private String contactInfo;
@@ -23,6 +24,8 @@ public class JobRequestDTO {
     private String latCoordinate;
     private MultipartFile mainImage;
     private MultipartFile[] secondaryImages;
+    private double authorId;
+
 
     // Getters and setters
 }

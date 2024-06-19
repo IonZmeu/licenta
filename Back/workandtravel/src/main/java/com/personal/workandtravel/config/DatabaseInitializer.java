@@ -5,12 +5,14 @@ import com.personal.workandtravel.repository.CommentRepository;
 import com.personal.workandtravel.repository.JobRepository;
 import com.personal.workandtravel.repository.ThreadRepository;
 import com.personal.workandtravel.repository.UserRepository;
+import com.personal.workandtravel.service.CurrencyConversionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import javax.money.convert.CurrencyConversion;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +32,8 @@ public class DatabaseInitializer implements CommandLineRunner {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    @Autowired
+    private CurrencyConversionService currencyConversionService;
 
     @Override
     public void run(String... args) {
@@ -98,15 +102,17 @@ public class DatabaseInitializer implements CommandLineRunner {
         JobEntity usa = new JobEntity(
                 "sunnyholiday",
                 "work@gmail.com",
-                "America",
+                "United States",
                 "39.045753",
                 "76.641273",
                 "Software Engineer",
-                "1200",
+                1200,
+                currencyConversionService.convertToUSD(1200, "USD"),
                 "USD",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "077965446 whatsapp, 077965446 phone",
-                images
+                images,
+                userRepository.findById(1L).orElseThrow()
         );
 
         JobEntity uk = new JobEntity(
@@ -116,11 +122,13 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "35.045753",
                 "72.641273",
                 "Barista",
-                "1000",
+                1000,
+                currencyConversionService.convertToUSD(1000, "USD"),
                 "USD",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "077962346 whatsapp, 077962346 phone",
-                images2
+                images2,
+                userRepository.findById(2L).orElseThrow()
         );
 
         JobEntity fr = new JobEntity(
@@ -130,11 +138,13 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "31.045753",
                 "75.641273",
                 "Life guard",
-                "1100",
+                1100,
+                currencyConversionService.convertToUSD(1100, "USD"),
                 "USD",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "012962346 whatsapp, 012962346 phone",
-                images3
+                images3,
+                userRepository.findById(1L).orElseThrow()
         );
 
         JobEntity pub = new JobEntity(
@@ -144,11 +154,13 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "35.445753",
                 "72.941273",
                 "Server",
-                "700",
+                700,
+                currencyConversionService.convertToUSD(700, "USD"),
                 "USD",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "012955346 whatsapp, 012955346 phone",
-                images4
+                images4,
+                userRepository.findById(2L).orElseThrow()
         );
 
         JobEntity accountant = new JobEntity(
@@ -158,39 +170,45 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "32.445753",
                 "71.941273",
                 "Accountant",
-                "1200",
+                1200,
+                currencyConversionService.convertToUSD(1200, "GBP"),
                 "GBP",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
                 "012953346 whatsapp, 0129553346 phone",
-                images5
+                images5,
+                userRepository.findById(1L).orElseThrow()
         );
 
         JobEntity salesman = new JobEntity(
                 "Sales",
                 "SalesInc@gmail.com",
-                "America",
+                "United States",
                 "35.445753",
                 "72.941273",
                 "salesman",
-                "800",
+                800,
+                currencyConversionService.convertToUSD(800, "USD"),
                 "USD",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "012957746 whatsapp, 012957746 phone",
-                images6
+                images6,
+                userRepository.findById(2L).orElseThrow()
         );
 
         JobEntity cashier = new JobEntity(
                 "Walmart",
                 "WalmartEmploy@gmail.com",
-                "America",
+                "United States",
                 "35.445753",
                 "72.941273",
                 "cashier",
-                "1300",
+                1300,
+                currencyConversionService.convertToUSD(1300, "USD"),
                 "USD",
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "018955346 whatsapp, 018955346 phone",
-                images7
+                images7,
+                userRepository.findById(1L).orElseThrow()
         );
 
         jobRepository.saveAll(
@@ -218,20 +236,24 @@ public class DatabaseInitializer implements CommandLineRunner {
                 int randomIndex = random.nextInt(numImages);
                 imagess.get(randomIndex).setImageType("1");
             }
-
+            double salary = getRandomSalary();
+            String country = getRandomCountry();
+            String currency = country.equals("United Kingdom") ? "GBP" : "USD";
             // Generate random job data
             JobEntity job = new JobEntity(
                     "Job " + i,
                     "email" + i + "@example.com",
-                    getRandomCountry(),
+                    country,
                     getRandomLatitude(),
                     getRandomLongitude(),
                     getRandomJobTitle(),
-                    getRandomSalary(),
-                    getRandomCountry().equals("United Kingdom") ? "GBP" : "USD",
+                    salary,
+                    currencyConversionService.convertToUSD(salary, currency),
+                    currency,
                     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                     getRandomContact(),
-                    imagess
+                    imagess,
+                    userRepository.findById((i % 2) + 1L).orElseThrow()
             );
 
             // Save the job to the repository
@@ -239,57 +261,58 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
     };
 
-    public void threadConfig(){
-        UserEntity author = userRepository.findById(1L).orElseThrow();
+    public void threadConfig() {
+        UserEntity author1 = userRepository.findById(1L).orElseThrow();
+        UserEntity author2 = userRepository.findById(2L).orElseThrow();
 
+        // Create initial threads
+        ThreadEntity thread1 = ThreadEntity.builder()
+                .author(author1)
+                .threadTitle("Best Cities for Digital Nomads")
+                .threadContent("Which cities around the world are the best for digital nomads? Share your experiences and recommendations.")
+                .build();
 
-        ThreadEntity thread1 = new ThreadEntity();
-        thread1.setAuthor(author);
-        thread1.setThreadTitle("Thread 1");
-        thread1.setThreadContent("This is the content of the first thread. Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        ThreadEntity thread2 = ThreadEntity.builder()
+                .author(author2)
+                .threadTitle("Remote Job Opportunities in Tech")
+                .threadContent("Discuss the current job market for remote tech jobs. Any tips for finding remote work?")
+                .build();
 
-        ThreadEntity thread2 = new ThreadEntity();
-        thread2.setAuthor(author);
-        thread2.setThreadTitle("Thread 2");
-        thread2.setThreadContent("This is the content of the second thread. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
+        ThreadEntity thread3 = ThreadEntity.builder()
+                .author(author1)
+                .threadTitle("Experience with Work Visas in Europe")
+                .threadContent("Share your experiences obtaining work visas in European countries. What challenges did you face?")
+                .build();
 
-        ThreadEntity thread3 = new ThreadEntity();
-        thread3.setAuthor(author);
-        thread3.setThreadTitle("Thread 3");
-        thread3.setThreadContent("This is the content of the third thread. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.");
-
-        ThreadEntity thread4 = new ThreadEntity();
-        thread4.setAuthor(author);
-        thread4.setThreadTitle("Thread 4");
-        thread4.setThreadContent("This is the content of the fourth thread. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+        ThreadEntity thread4 = ThreadEntity.builder()
+                .author(author2)
+                .threadTitle("Opinions on Working Holiday Programs")
+                .threadContent("What are your opinions on working holiday programs? Which countries offer the best opportunities?")
+                .build();
 
         threadRepository.saveAll(List.of(thread1, thread2, thread3, thread4));
 
-        for (int i = 5; i <= 54; i++) {
-            ThreadEntity thread = new ThreadEntity();
-            thread.setAuthor(author);
-            thread.setThreadTitle("Thread " + i);
-            thread.setThreadContent("This is the content of Thread " + i + ". Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        // Generate additional threads
+        Random random = new Random();
+        for (int i = 5; i <= 50; i++) {
+            UserEntity author = random.nextBoolean() ? author1 : author2;
+            ThreadEntity thread = ThreadEntity.builder()
+                    .author(author)
+                    .threadTitle("Thread " + i)
+                    .threadContent("This is the content of Thread " + i + ". Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
+                    .build();
             threadRepository.save(thread);
         }
 
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 1", 1L);
+        // Update image_entity table for the first few threads (assuming you have ImageEntity objects)
+        for (int i = 1; i <= 12; i++) {
+            jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = ?", i, i);
+        }
 
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 2", 2L);
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 3", 2L);
-
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 4", 3L);
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 5", 3L);
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 6", 3L);
-
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 7", 4L);
-
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 8", 5L);
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 9", 5L);
-
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 10", 6L);
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 11", 6L);
-        jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = 12", 6L);
+        // Insert followed threads for user 1 for the first 4 threads
+        for (int i = 1; i <= 4; i++) {
+            jdbcTemplate.update("INSERT INTO followed_threads (thread_id, user_id) VALUES (?, ?)", i, 1L);
+        }
     }
 
     public void commentConfig(){
@@ -306,7 +329,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         comment1.setParent(null);
         comment1.setDepth(0L);
         comment1.setUsername(author.getUsername());
-        comment1.setCommentContent("This is the first comment. Lorem ipsum dolor sit amet, consectetur adipiscing elit sadasfbasbd abdhasbhdb ahbds basb aszb fzuasb gubauzsf zasbf uasb gziasbfiz bafzi bazif bauif iasnf iuasnugi a.");
+        comment1.setCommentContent("I worked there last year, it was amazing I loved the vibe and my manager was such a nice person.");
 
         comment1 = commentRepository.save(comment1);
 
@@ -319,19 +342,36 @@ public class DatabaseInitializer implements CommandLineRunner {
         comment2.setParent(comment1);
         comment2.setDepth(comment1.getDepth()+1L);
         comment2.setUsername(author2.getUsername());
-        comment2.setCommentContent("This is the reply to the first comment. Lorem ipsum dolor sit amet, consectetur adipiscing elit sadasfbasbd abdhasbhdb ahbds basb aszb fzuasb gubauzsf zasbf uasb gziasbfiz bafzi bazif bauif iasnf iuasnugi a.");
+        comment2.setCommentContent("How was the pay? I'm considering applying.");
         commentRepository.save(comment2);
+
+        CommentEntity comment3  = new CommentEntity();
+        comment3.setJob(job);
+        comment3.setThread(null);
+        comment3.setUser(author);
+        comment3.setParent(comment2);
+        comment3.setDepth(comment2.getDepth()+1L);
+        comment3.setUsername(author.getUsername());
+        comment3.setCommentContent("The pay was decent, not the best but it was worth it for the experience.");
 
         comment1.setChildren(List.of(comment2));
         commentRepository.save(comment1);
 
     }
 
+    private static int getRandomLikes() {
+        Random random = new Random();
+        return random.nextInt(401) ; // Range between -200 and 200
+    }
 
     private static String getRandomCountry() {
         // Assuming you have a list of countries
-        List<String> countries = Arrays.asList("America", "United Kingdom", "France");
+        List<String> countries = Arrays.asList("United States", "China", "India", "Indonesia", "Pakistan",
+                "Brazil", "Nigeria", "Bangladesh", "Russia", "Mexico",
+                "Japan", "Ethiopia", "Philippines", "Egypt", "Vietnam",
+                "Romania", "Turkey", "Iran", "Germany", "Thailand");
         Random random = new Random();
+
         return countries.get(random.nextInt(countries.size()));
     }
 
@@ -354,11 +394,11 @@ public class DatabaseInitializer implements CommandLineRunner {
         return jobTitles.get(random.nextInt(jobTitles.size()));
     }
 
-    private static String getRandomSalary() {
+    private static double getRandomSalary() {
         // Generate random salary (assuming it's within a certain range)
         Random random = new Random();
-        int salary = 500 + random.nextInt(1000); // Range between 500 and 1500
-        return String.valueOf(salary);
+        double salary = 500 + random.nextInt(1000); // Range between 500 and 1500
+        return salary;
     }
 
     private static String getRandomContact() {

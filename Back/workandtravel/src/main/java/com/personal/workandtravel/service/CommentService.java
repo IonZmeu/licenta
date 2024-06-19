@@ -4,15 +4,13 @@ import com.personal.workandtravel.dto.CommentDTO;
 import com.personal.workandtravel.entity.CommentEntity;
 import com.personal.workandtravel.entity.JobEntity;
 import com.personal.workandtravel.entity.UserEntity;
-import com.personal.workandtravel.repository.CommentRepository;
-import com.personal.workandtravel.repository.ImageRepository;
-import com.personal.workandtravel.repository.JobRepository;
-import com.personal.workandtravel.repository.UserRepository;
+import com.personal.workandtravel.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentService {
@@ -20,11 +18,14 @@ public class CommentService {
     private  final JobRepository jobRepository;
     private  final UserRepository userRepository;
 
+    private  final LikeRepository likeRepository;
+
     @Autowired
-    public CommentService(CommentRepository commentRepository, JobRepository jobRepository, UserRepository userRepository) {
+    public CommentService(CommentRepository commentRepository, JobRepository jobRepository, UserRepository userRepository, LikeRepository likeRepository) {
         this.commentRepository = commentRepository;
         this.jobRepository = jobRepository;
         this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
     }
 
     public Optional<CommentEntity> getComment(Long id) {
@@ -50,6 +51,33 @@ public class CommentService {
     }
 
     public List<CommentEntity> getCommentsByJob(Long jobId) {
-        return commentRepository.findCommentsByJobIdAndDepth(jobId,0L);
+        return commentRepository.findCommentsByJobIdAndDepthOrderByTimeCreated(jobId,0L);
+    }
+
+    public List<CommentDTO> getCommentsDTOByJob(Long id) {
+        List<CommentEntity> comments = commentRepository.findCommentsByJobIdAndDepthOrderByTimeCreated(id, 0L);
+        return comments.stream().map(this::mapToCommentDTO).collect(Collectors.toList());
+    }
+
+    private CommentDTO mapToCommentDTO(CommentEntity comment) {
+        CommentDTO commentDTO = new CommentDTO();
+        commentDTO.setId(comment.getId());
+        commentDTO.setJobId(comment.getJob() != null ? comment.getJob().getId() : null);
+        commentDTO.setThreadId(comment.getThread() != null ? comment.getThread().getId() : null);
+        commentDTO.setUserId(comment.getUser().getId());
+        commentDTO.setDepth(comment.getDepth());
+        commentDTO.setParentId(comment.getParent() != null ? comment.getParent().getId() : null);
+        commentDTO.setLikes(likeRepository.countByCommentAndLiked(comment, true));
+        commentDTO.setDislikes(likeRepository.countByCommentAndLiked(comment, false));
+        commentDTO.setUsername(comment.getUsername());
+        commentDTO.setCommentContent(comment.getCommentContent());
+        commentDTO.setTimeCreated(comment.getTimeCreated());
+        commentDTO.setChildren(comment.getChildren().stream().map(this::mapToCommentDTO).collect(Collectors.toList()));
+        return commentDTO;
+    }
+
+    public List<CommentDTO> getCommentsDTOByThread(Long id) {
+        List<CommentEntity> comments = commentRepository.findCommentsByThreadIdAndDepthOrderByTimeCreated(id, 0L);
+        return comments.stream().map(this::mapToCommentDTO).collect(Collectors.toList());
     }
 }

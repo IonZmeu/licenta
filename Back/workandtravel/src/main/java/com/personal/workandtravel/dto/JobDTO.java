@@ -15,7 +15,11 @@ public class JobDTO {
     private String name;
     private String country;
     private String job;
-    private String salary;
+    private double salary;
+    private double userId;
+    private Long likes;
+    private Long dislikes;
+    private String creatorName;
     private String currency;
     private String description;
     private ImageEntity mainImage;

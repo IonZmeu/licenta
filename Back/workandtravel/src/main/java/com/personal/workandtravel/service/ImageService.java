@@ -21,7 +21,11 @@ public class ImageService {
 
     public String getimageUUID(Long id) {
         Optional<ImageEntity> image = imageRepository.findImageById(id);
-
         return image.get().getImageUrl();
+    }
+
+    public String getProfileImageFromUserId(Long id) {
+        Optional<ImageEntity> image = imageRepository.findImageByUserIdAndImageType(id, "1");
+        return image.map(ImageEntity::getImageUrl).orElse("");
     }
 }

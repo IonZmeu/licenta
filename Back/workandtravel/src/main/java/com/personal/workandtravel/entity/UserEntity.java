@@ -1,5 +1,6 @@
 package com.personal.workandtravel.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -51,6 +52,41 @@ public class UserEntity implements UserDetails {
     @JoinColumn(name = "author_id", referencedColumnName = "id")
     private List<ThreadEntity> thread = new ArrayList<>();
 
+    @JsonManagedReference(value = "author-jobs")
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "author_id", referencedColumnName = "id")
+    private List<JobEntity> job = new ArrayList<>();
+
+    @JsonBackReference(value = "user-threads")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH })
+    @JoinTable(name = "followed_threads", joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "thread_id"))
+    private List<ThreadEntity> followedThreads;
+
+    @JsonManagedReference(value = "user-jobs")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "followed_jobs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "job_id"))
+    private List<JobEntity> followedJobs = new ArrayList<>();
+
+    @JsonManagedReference(value = "user-images")
+    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private List<ImageEntity> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<SkillEntity> skills;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<EducationEntity> educations;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<WorkExperienceEntity> workExperiences;
+
+    @JsonManagedReference(value = "user-likes")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<LikeEntity> givenLikesAndDislikes = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -81,4 +117,5 @@ public class UserEntity implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }

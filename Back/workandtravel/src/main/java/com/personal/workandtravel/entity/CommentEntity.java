@@ -2,7 +2,6 @@ package com.personal.workandtravel.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.personal.workandtravel.dto.CommentDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,8 +46,7 @@ public class CommentEntity {
     private CommentEntity parent;
 
     @JsonManagedReference(value = "children-comments")
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "parent_id", referencedColumnName = "id")
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentEntity> children = new ArrayList<>();
 
     @JsonBackReference(value = "user-comments")
@@ -66,9 +64,11 @@ public class CommentEntity {
     @JoinColumn(name = "thread_id", referencedColumnName = "id")
     private ThreadEntity thread;
 
+    @JsonManagedReference(value = "comment-likes")
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LikeEntity> givenLikesAndDislikes = new ArrayList<>();
 
-
-    public CommentEntity( String commentContent, String username, Long depth, CommentEntity parent, UserEntity user, JobEntity job, ThreadEntity thread) {
+    public CommentEntity(String commentContent, String username, Long depth, CommentEntity parent, UserEntity user, JobEntity job, ThreadEntity thread) {
         this.commentContent = commentContent;
         this.username = username;
         this.depth = depth;

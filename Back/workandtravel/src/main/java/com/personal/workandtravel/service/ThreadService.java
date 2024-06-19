@@ -1,26 +1,86 @@
 package com.personal.workandtravel.service;
 
-import com.personal.workandtravel.dto.JobDTO;
 import com.personal.workandtravel.dto.ThreadDTO;
-import com.personal.workandtravel.entity.ImageEntity;
-import com.personal.workandtravel.entity.JobEntity;
 import com.personal.workandtravel.entity.ThreadEntity;
+import com.personal.workandtravel.entity.UserEntity;
+import com.personal.workandtravel.repository.LikeRepository;
 import com.personal.workandtravel.repository.ThreadRepository;
+import com.personal.workandtravel.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+import org.hibernate.search.engine.search.query.SearchResult;
+import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.session.SearchSession;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ThreadService {
 
-    private final ThreadRepository threadRepository;
 
-    public ThreadService(ThreadRepository threadRepository) {
+    @PersistenceContext
+    private EntityManager entityManager;
+    private final ThreadRepository threadRepository;
+    private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
+    private int pageSize = 24;
+    public ThreadService(ThreadRepository threadRepository, UserRepository userRepository, LikeRepository likeRepository) {
         this.threadRepository = threadRepository;
+        this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
+    }
+
+    public Map<String, Object> searchThreads(String keyword, int page) throws InterruptedException {
+        SearchSession searchSession = Search.session(entityManager);
+        MassIndexer indexer = searchSession.massIndexer()
+                .threadsToLoadObjects( 2 );
+        indexer.startAndWait();
+        int offset = (page - 1) * pageSize;
+
+        SearchResult<ThreadEntity> searchResult = searchSession.search(ThreadEntity.class)
+                .where(f -> f.bool(b -> b
+                        .should(f.match().fields("threadTitle", "threadContent").matching(keyword).fuzzy(2))))
+                .fetch(offset, pageSize);
+
+        List<ThreadDTO> threadDTOs = searchResult.hits().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        long totalHits = searchResult.total().hitCount();
+
+        Long totalPages = (long) Math.ceil((double) totalHits / pageSize);
+        System.out.println("Total hits: " + totalHits);
+        System.out.println("Total pages: " + totalPages);
+
+        Map<String, Object> threads = new HashMap<>();
+        threads.put("threads", threadDTOs);
+        threads.put("totalPages", totalPages);
+
+        return threads;
+    }
+
+    @Transactional
+    public void followThread(Long threadId, Long userId) {
+        System.out.println("userId: " + userId + " threadId: " + threadId);
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        ThreadEntity thread = threadRepository.findById(threadId)
+                .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
+
+        if (user.getFollowedThreads().contains(thread)) {
+            user.getFollowedThreads().remove(thread); // Remove the thread if already followed
+        } else {
+            user.getFollowedThreads().add(thread); // Otherwise, add the thread to followed threads
+        }
+
+        userRepository.save(user);
     }
 
     public List<ThreadDTO> getThreads() {
@@ -30,8 +90,8 @@ public class ThreadService {
             threadsDTO.add(ThreadDTO.builder()
                     .id(thread.getId())
                     .authorId(thread.getAuthor().getId())
-                    .likes(thread.getLikes())
-                    .dislikes(thread.getDislikes())
+                    .likes(likeRepository.countByThreadAndLiked(thread, true))
+                    .dislikes(likeRepository.countByThreadAndLiked(thread, false))
                     .authorName(thread.getAuthor().getUsername())
                     .threadTitle(thread.getThreadTitle())
                     .threadContent(thread.getThreadContent())
@@ -42,7 +102,7 @@ public class ThreadService {
         return threadsDTO;
     }
 
-    public ThreadDTO getThread(Long id) {
+    public ThreadDTO getThreadDTO(Long id) {
         ThreadEntity thread = threadRepository.findById(id).orElse(null);
         if (thread == null) {
             return null;
@@ -50,8 +110,8 @@ public class ThreadService {
         return ThreadDTO.builder()
                 .id(thread.getId())
                 .authorId(thread.getAuthor().getId())
-                .likes(thread.getLikes())
-                .dislikes(thread.getDislikes())
+                .likes(likeRepository.countByThreadAndLiked(thread, true))
+                .dislikes(likeRepository.countByThreadAndLiked(thread, false))
                 .authorName(thread.getAuthor().getUsername())
                 .threadTitle(thread.getThreadTitle())
                 .threadContent(thread.getThreadContent())
@@ -60,6 +120,9 @@ public class ThreadService {
                 .build();
     }
 
+    public ThreadEntity getThread(Long id) {
+        return threadRepository.findById(id).orElse(null);
+    }
     public ThreadEntity addNewThread(ThreadEntity thread) {
         return threadRepository.save(thread);
     }
@@ -95,31 +158,93 @@ public class ThreadService {
 
     public List<ThreadEntity> getPage(int page) {
         int pageNumber = page;
-        int pageSize = 24;
         Page<ThreadEntity> threadEntitiesPage = threadRepository.findAll(PageRequest.of(pageNumber, pageSize));
 
         // Retrieve entities from the page
         List<ThreadEntity> threadEntities = threadEntitiesPage.getContent();
         return threadEntities;
     }
-    public List<ThreadDTO> getThreadDTO(String page) {
-        List<ThreadEntity> jobEntities = getPage(Integer.parseInt(page)-1);
-        List<ThreadDTO> threadDTOS = new java.util.ArrayList<>();
-        for (ThreadEntity threadEntity : jobEntities) {
-            ThreadDTO threadDTO = new ThreadDTO();
-            threadDTO.setId(threadEntity.getId());
-            threadDTO.setAuthorName(threadEntity.getAuthor().getUsername());
-            threadDTO.setDislikes(threadEntity.getDislikes());
-            threadDTO.setLikes(threadEntity.getLikes());
-            threadDTO.setThreadContent(threadEntity.getThreadContent());
-            threadDTO.setThreadTitle(threadEntity.getThreadTitle());
-            threadDTO.setComments(threadEntity.getComments());
-            threadDTO.setImages(threadEntity.getImages());
-            threadDTO.setAuthorId(threadEntity.getAuthor().getId());
 
 
-            threadDTOS.add(threadDTO);
-        }
-        return threadDTOS;
+    public Map<String, Object> getThreadsSortedByTimeCreated(String page) {
+        Page<ThreadEntity> threadEntities = threadRepository.getThreadsSortedByTimeCreated(PageRequest.of(Integer.parseInt(page) - 1, pageSize));
+
+        List<ThreadDTO> threadDTOS = threadEntities.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        long totalPages = threadEntities.getTotalPages(); // Assuming you have a method to calculate total pages
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("threads", threadDTOS);
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    public Map<String, Object> getThreadsSortedByLikes(String page) {
+        Page<ThreadEntity> threadEntities = threadRepository.getThreadsSortedByLikes(PageRequest.of(Integer.parseInt(page) - 1, pageSize));
+
+        List<ThreadDTO> threadDTOS = threadEntities.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        long totalPages = threadEntities.getTotalPages();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("threads", threadDTOS);
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    public Map<String, Object> getMostLikedThreadsInPastWeek(String page) {
+        LocalDateTime date = LocalDateTime.now().minusDays(7);
+
+        Page<ThreadEntity> threadEntities = threadRepository.getMostLikedThreadsInPastWeek(date, PageRequest.of(Integer.parseInt(page) - 1, pageSize));
+
+
+        List<ThreadDTO> threadDTOS = threadEntities.getContent().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        long totalPages = threadEntities.getTotalPages();
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("threads", threadDTOS);
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    public Map<String, Object> getPageDTONoSort(String page) {
+        Page<ThreadEntity> threadEntities = threadRepository.findAll(PageRequest.of(Integer.parseInt(page) - 1, pageSize));
+
+        List<ThreadDTO> threadDTOS = threadEntities.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        long totalPages = threadEntities.getTotalPages(); // Assuming you have a method to calculate total pages
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("threads", threadDTOS);
+        result.put("totalPages", totalPages);
+
+        return result;
+    }
+
+    private ThreadDTO convertToDTO(ThreadEntity thread) {
+        ThreadDTO threadDTO = new ThreadDTO();
+        threadDTO.setId(thread.getId());
+        threadDTO.setAuthorId(thread.getAuthor().getId());
+        threadDTO.setAuthorName(thread.getAuthor().getUsername());
+        threadDTO.setThreadTitle(thread.getThreadTitle());
+        threadDTO.setThreadContent(thread.getThreadContent());
+        threadDTO.setComments(thread.getComments());
+        threadDTO.setImages(thread.getImages());
+        threadDTO.setLikes(likeRepository.countByThreadAndLiked(thread, true));
+        threadDTO.setDislikes(likeRepository.countByThreadAndLiked(thread, false));
+
+        return threadDTO;
     }
 }

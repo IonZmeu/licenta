@@ -67,9 +67,28 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.javamoney</groupId>
+			<artifactId>moneta</artifactId>
+			<version>1.4.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.cloudconvert</groupId>
+			<artifactId>cloudconvert-java</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate.search</groupId>
+			<artifactId>hibernate-search-mapper-orm</artifactId>
+			<version>7.1.1.Final</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate.search</groupId>
+			<artifactId>hibernate-search-backend-lucene</artifactId>
+			<version>7.1.1.Final</version>
+		</dependency>
 
-
-	</dependencies>
+    </dependencies>
 
 	<build>
 		<plugins>

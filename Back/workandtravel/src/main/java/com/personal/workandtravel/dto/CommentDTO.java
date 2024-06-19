@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -15,21 +16,19 @@ import java.util.List;
 @Builder
 public class CommentDTO {
 
+    private Long id;
     private Long jobId;
-
     private Long threadId;
-
     private Long userId;
-
     private Long depth;
-
     private Long parentId;
-
+    private Long likes;
+    private Long dislikes;
     private String username;
-
     private String commentContent;
+    private Date timeCreated;
 
-    private List<CommentEntity> children;
+    private List<CommentDTO> children;
 
 
     // Getters and setters
