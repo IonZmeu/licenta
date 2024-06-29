@@ -40,4 +40,7 @@ public interface ThreadRepository extends JpaRepository<ThreadEntity, Long> {
 
     @Query("SELECT t FROM ThreadEntity t ORDER BY t.timeCreated DESC")
     Page<ThreadEntity> getThreadsSortedByTimeCreated(Pageable page);
+
+    @Query("SELECT t FROM ThreadEntity t WHERE t.author.id = :userId OR EXISTS (SELECT u FROM t.user u WHERE u.id = :userId)")
+    List<ThreadEntity> findAllFollowedAndCreatedByUserId(@Param("userId") Long userId);
 }

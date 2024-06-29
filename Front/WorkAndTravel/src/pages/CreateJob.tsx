@@ -1,10 +1,11 @@
 import React, { ChangeEvent, useState } from 'react';
-import { Box, Button, Card, CardActions, CardContent, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Step, StepLabel, Stepper, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, CardActions, CardContent, FormControl, Grid, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Snackbar, Step, StepLabel, Stepper, TextField, Typography } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 import { countries, codes } from 'currency-codes-ts';
 import { MapForm } from "../components/GoogleMapsComponent";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
 
 const steps = ['General information', 'Location', 'Images'];
 interface FormData {
@@ -24,20 +25,78 @@ interface FormData {
 
 
 const countriesList = countries(); // Get the list of all country names
-const currencyCodeList = codes();
 
+const removeCodes = new Set([
+  'AZM', 'FIM', 'CSD', 'DEM', 'MTL', 'BEF', 'TRL', 'ZWR', 'MRO', 'GHC', 'VEF', 'BGL', 'ADP',
+  'ESP', 'MGF', 'ZWN', 'BYR', 'AYM', 'XFU', 'EEK', 'RUR', 'ITL', 'ATS', 'SDD', 'USS', 'YUM',
+  'GWP', 'TPE', 'HRK', 'STD', 'SRG', 'SIT', 'PTE', 'MZM', 'CYP', 'GRD', 'SKK', 'LUF', 'AFA',
+  'TMM', 'IEP', 'ZWD', 'VEB', 'LVL', 'NLG', 'BYB', 'LTL', 'FRF', 'SDR', 'ROL', 'ZMK', 'XFO',
+  'UYW'
+]); //not supported by moneta library in java
+
+//const currencyCodeList = codes().filter(code => !removeCodes.has(code));
+const validCodes = new Set([
+  'MDL', 'RON', 'USD', 'GBP', 'EUR', 'JPY', 'TRL', 'CHF', 'HKD', 'NZD', 'AUD', 'CAD', 'UKR'
+]);
+const currencyCodeList = codes().filter(code => validCodes.has(code));
 const CreateJob = () => {
 
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [secondaryImages, setSecondaryImages] = useState<File[]>([]);
   const [activeStep, setActiveStep] = React.useState(0);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [position, setPosition] = useState({ lat: 40.7567955, lng: -73.9512418 });
   const mapStyles = {
     height: "70vh",
     width: "100%"
   };
+  const [open, setOpen] = React.useState(false);
+
+
+
+  const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      navigate('/');
+      return;
+    }
+    navigate('/');
+    setOpen(false);
+  };
 
   const navigate = useNavigate();
+
+
+  const action = (
+    <React.Fragment>
+      <IconButton
+        size="small"
+        aria-label="close"
+        color="inherit"
+        onClick={handleClose}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </React.Fragment>
+  );
+
+  const validateForm = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.name) newErrors.name = 'Business name is required';
+    if (!formData.email) {
+      newErrors.email = 'Business email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email format is invalid';
+    }
+    if (!formData.country) newErrors.country = 'Country is required';
+    if (!formData.job) newErrors.job = 'Job title is required';
+    if (!formData.salary) newErrors.salary = 'Salary is required';
+    if (!formData.currency) newErrors.currency = 'Currency is required';
+    if (!formData.description) newErrors.description = 'Description is required';
+    if (!formData.contactInfo) newErrors.contactInfo = 'Contact info is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -55,6 +114,9 @@ const CreateJob = () => {
   });
 
   const handleNext = () => {
+    if (activeStep === 0 && !validateForm()) {
+      return;
+    }
 
     if (activeStep === 2) {
       console.log(formData);
@@ -87,8 +149,8 @@ const CreateJob = () => {
       })
         .then((res) => console.log(res))
         .catch((err) => console.error(err));
-      console.log("submited data");
-      //navigate('/');
+      console.log("submitted data");
+      setOpen(true);
 
     } else {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
@@ -101,6 +163,7 @@ const CreateJob = () => {
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    setErrors(prevErrors => ({ ...prevErrors, [name]: '' })); // Clear the error for the field being updated
     if (type === 'file') {
       const fileList = (e.target as HTMLInputElement).files;
       if (fileList) {
@@ -120,6 +183,7 @@ const CreateJob = () => {
 
   const handleSelectChange = (e: SelectChangeEvent<any>) => {
     const { name, value } = e.target;
+    setErrors(prevErrors => ({ ...prevErrors, [name]: '' })); // Clear the error for the field being updated
     setFormData({
       ...formData,
       [name]: value,
@@ -152,7 +216,7 @@ const CreateJob = () => {
   return (
     <div style={{ margin: '20px 15% 0' }}>
       <Box sx={{ width: '100%' }}>
-        <Stepper activeStep={activeStep}>
+        <Stepper activeStep={activeStep} sx={{ display: { xs: 'none', md: 'flex' } }}>
           {steps.map((label, index) => {
             const stepProps: { completed?: boolean } = {};
             const labelProps: {
@@ -188,7 +252,6 @@ const CreateJob = () => {
                 padding: 4,
                 border: '1px solid #ccc',
                 borderRadius: 2,
-                backgroundColor: '#f9f9f9'
               }}
             >
               <Typography variant="h5" component="div" sx={{ textAlign: 'center', marginBottom: 3 }}>
@@ -196,19 +259,20 @@ const CreateJob = () => {
               </Typography>
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Business name" name="name" value={formData.name} onChange={handleInputChange} fullWidth />
+                  <TextField required label="Business name" name="name" value={formData.name} onChange={handleInputChange} error={Boolean(errors.name)} helperText={errors.name} fullWidth />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Business email" name="email" value={formData.email} onChange={handleInputChange} fullWidth />
+                  <TextField required label="Business email" name="email" value={formData.email} onChange={handleInputChange} error={Boolean(errors.email)} helperText={errors.email} fullWidth />
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <InputLabel>Country</InputLabel>
+                    <InputLabel required id="country-label">Country</InputLabel>
                     <Select
                       label="Country"
                       name="country"
                       value={formData.country}
                       onChange={handleSelectChange}
+                      error={Boolean(errors.country)}
                       MenuProps={{
                         PaperProps: {
                           style: {
@@ -224,22 +288,25 @@ const CreateJob = () => {
                         </MenuItem>
                       ))}
                     </Select>
+                    {errors.country && <Typography variant="caption" color="error">{errors.country}</Typography>}
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="job title" name="job" value={formData.job} onChange={handleInputChange} fullWidth />
+                  <TextField required label="job title" name="job" value={formData.job} onChange={handleInputChange} error={Boolean(errors.job)} helperText={errors.job} fullWidth />
+
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label="Salary (per month)" name="salary" value={formData.salary} onChange={handleInputChange} fullWidth />
+                  <TextField required label="Salary (per month)" name="salary" value={formData.salary} onChange={handleInputChange} error={Boolean(errors.salary)} helperText={errors.salary} fullWidth />
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth>
-                    <InputLabel>Currency</InputLabel>
+                    <InputLabel required id="currency-label">Currency</InputLabel>
                     <Select
                       label="Currency"
                       name="currency"
                       value={formData.currency}
                       onChange={handleSelectChange}
+                      error={Boolean(errors.currency)}
                       MenuProps={{
                         PaperProps: {
                           style: {
@@ -258,10 +325,10 @@ const CreateJob = () => {
                   </FormControl>
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField label="Description" name="description" value={formData.description} onChange={handleInputChange} fullWidth multiline rows={4} />
+                  <TextField required label="Description" name="description" value={formData.description} onChange={handleInputChange} error={Boolean(errors.description)} helperText={errors.description} fullWidth multiline rows={4} />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField label="Contact Info" name="contactInfo" value={formData.contactInfo} onChange={handleInputChange} fullWidth />
+                  <TextField required label="Contact Info" name="contactInfo" value={formData.contactInfo} onChange={handleInputChange} error={Boolean(errors.contactInfo)} helperText={errors.contactInfo} fullWidth />
                 </Grid>
               </Grid>
             </Box>)}
@@ -277,13 +344,12 @@ const CreateJob = () => {
                 padding: 2,
                 border: '1px solid #ccc',
                 borderRadius: 2,
-                backgroundColor: '#f9f9f9'
               }}
             >
               <Typography variant="h5" component="div" sx={{ textAlign: 'center', marginBottom: 2 }}>
                 Location
               </Typography>
-              <MapForm />
+              <MapForm position={position} setPosition={setPosition} />
             </Box>)}
             {activeStep === 2 && (
               <>
@@ -301,7 +367,6 @@ const CreateJob = () => {
                     padding: 4,
                     border: '1px solid #ccc',
                     borderRadius: 2,
-                    backgroundColor: '#f9f9f9'
                   }}
                 >
                   <Typography variant="h5" component="div" sx={{ textAlign: 'center', marginBottom: 3 }}>
@@ -352,7 +417,6 @@ const CreateJob = () => {
                     padding: 4,
                     border: '1px solid #ccc',
                     borderRadius: 2,
-                    backgroundColor: '#f9f9f9'
                   }}
                 >
                   <Typography variant="h5" component="div" sx={{ textAlign: 'center', marginBottom: 3 }}>
@@ -416,9 +480,24 @@ const CreateJob = () => {
                 Back
               </Button>
               <Box sx={{ flex: '1 1 auto' }} />
-              <Button onClick={handleNext}>
-                {activeStep === steps.length - 1 ? 'Submit' : 'Next'}
-              </Button>
+              {activeStep === steps.length - 1 ? (
+                <Box>
+                  <Button onClick={handleNext}>
+                    Submit
+                  </Button>
+                  <Snackbar
+                    open={open}
+                    autoHideDuration={6000}
+                    onClose={handleClose}
+                    message="Job created, navigating to home page"
+                    action={action}
+                  />
+                </Box>
+              ) : (
+                <Button onClick={handleNext}>
+                  Next
+                </Button>
+              )}
             </Box>
           </div>
         )}

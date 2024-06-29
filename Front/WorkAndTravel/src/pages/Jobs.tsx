@@ -47,6 +47,32 @@ const Jobs = () => {
     }
   };
 
+  function timeAgo(timeCreated: string): string {
+    const createdDate = new Date(timeCreated);
+    const now = new Date();
+
+    const seconds = Math.floor((now.getTime() - createdDate.getTime()) / 1000);
+
+    const intervals = [
+      { label: 'year', seconds: 31536000 },
+      { label: 'month', seconds: 2592000 },
+      { label: 'week', seconds: 604800 },
+      { label: 'day', seconds: 86400 },
+      { label: 'hour', seconds: 3600 },
+      { label: 'minute', seconds: 60 },
+      { label: 'second', seconds: 1 }
+    ];
+
+    for (const interval of intervals) {
+      const time = Math.floor(seconds / interval.seconds);
+      if (time > 0) {
+        return `${time} ${interval.label}${time !== 1 ? 's' : ''} ago`;
+      }
+    }
+
+    return 'just now';
+  }
+
   const fetchUserActions = async () => {
     try {
       setDislikedJobs([]);
@@ -157,6 +183,9 @@ const Jobs = () => {
                           </Typography>
                           <Typography variant="body2" color="text.secondary" >
                             <span style={{ fontWeight: 'bold' }}>About us: </span>{job.description && job.description.length > 150 ? job.description.substring(0, 150) + "..." : job.description}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Created:</strong> {job?.timeCreated ? timeAgo(job?.timeCreated) : <></>}
                           </Typography>
                         </CardContent>
                       </div>

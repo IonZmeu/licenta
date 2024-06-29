@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -16,6 +17,7 @@ import java.util.List;
 public class JobPageDTO {
     private Long id;
     private String name;
+    private String email;
     private String country;
     private String job;
     private String latCoordinate;
@@ -25,8 +27,10 @@ public class JobPageDTO {
     private Long likes;
     private Long dislikes;
     private String creatorName;
+    private String contactInfo;
     private String currency;
     private String description;
+    private LocalDateTime timeCreated;
     private List<ImageEntity> images;
     private List<CommentEntity> comments;
 }

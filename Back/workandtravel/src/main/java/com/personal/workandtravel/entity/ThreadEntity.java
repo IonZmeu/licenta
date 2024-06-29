@@ -71,4 +71,10 @@ public class ThreadEntity {
     @JoinColumn(name = "thread_id")
     private List<LikeEntity> givenLikesAndDislikes = new ArrayList<>();
 
+    public ThreadEntity(String threadTitle,String threadContent,UserEntity author,List<ImageEntity> images) {
+        this.threadTitle = threadTitle;
+        this.threadContent = threadContent;
+        this.author = author;
+        this.images = images;
+    }
 }

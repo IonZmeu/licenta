@@ -126,13 +126,15 @@ public class JobController {
         System.out.println(jobRequest.toString());
 
         List<ImageEntity> imagePaths = new ArrayList<>();
-
-        for (MultipartFile image : jobRequest.getSecondaryImages()) {
-            String uuid = UUID.randomUUID().toString();
-            imagePaths.add(new ImageEntity(uuid, "0"));
-            File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
-            image.transferTo(file);  // Save the uploaded file to your local directory
+        if(jobRequest.getSecondaryImages() != null ) {
+            for (MultipartFile image : jobRequest.getSecondaryImages()) {
+                String uuid = UUID.randomUUID().toString();
+                imagePaths.add(new ImageEntity(uuid, "0"));
+                File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
+                image.transferTo(file);  // Save the uploaded file to your local directory
+            }
         }
+
 
         String uuid = UUID.randomUUID().toString();
         imagePaths.add(new ImageEntity(uuid, "1"));
@@ -162,6 +164,12 @@ public class JobController {
     @PostMapping(value = "/hi")
     public String hi() {
         return "Hi";
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteJob(@PathVariable Long id) {
+        jobService.deleteJob(id);
+        return ResponseEntity.noContent().build();
     }
 
 }

@@ -108,8 +108,8 @@ public class ProfileService {
                         .company(workExperienceDTO.getCompany())
                         .role(workExperienceDTO.getRole())
                         .description(workExperienceDTO.getDescription())
-                        .startYear(workExperienceDTO.getStartYear())
-                        .endYear(workExperienceDTO.getEndYear())
+                        .startDate(workExperienceDTO.getStartDate())
+                        .endDate(workExperienceDTO.getEndDate())
                         .user(user)
                         .build();
                 workExperienceRepository.save(workExperience);

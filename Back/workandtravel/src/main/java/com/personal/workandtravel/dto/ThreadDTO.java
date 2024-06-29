@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class ThreadDTO {
         private String authorName;
         private String threadTitle;
         private String threadContent;
+        private LocalDateTime timeCreated;
         private List<CommentEntity> comments;
         private List<ImageEntity> images;
 

@@ -5,6 +5,8 @@ import com.personal.workandtravel.dto.WorkExperienceDTO;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,8 +20,11 @@ public class WorkExperienceEntity {
     private String company;
     private String role;
     private String description;
-    private int startYear;
-    private int endYear;
+    @Column(name = "start_year")
+    private LocalDateTime startDate;
+
+    @Column(name = "end_year")
+    private LocalDateTime endDate;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -31,8 +36,8 @@ public class WorkExperienceEntity {
         workExperienceDTO.setCompany(this.company);
         workExperienceDTO.setRole(this.role);
         workExperienceDTO.setDescription(this.description);
-        workExperienceDTO.setStartYear(this.startYear);
-        workExperienceDTO.setEndYear(this.endYear);
+        workExperienceDTO.setStartDate(this.startDate);
+        workExperienceDTO.setEndDate(this.endDate);
         return workExperienceDTO;
     }
 }

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, Box, Grid, IconButton, Typography } from '@mui/material';
+import { Avatar, Grid, IconButton, Typography } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
@@ -10,6 +10,8 @@ import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { ThreadDTO } from '../interfaces/types';
 import { handleDislikeThread, handleFollowThread, handleLikeThread } from '../functions/functions';
+import { useAppContext } from '../components/AppContext';
+
 import ImageSlider from './ImageSlider';
 
 interface Props {
@@ -28,6 +30,33 @@ const ThreadView: React.FC<Props> = ({ thread, setFollowedThreads, setLikedThrea
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [pfp, setPfp] = useState<string>("");
 
+    const { value, setValue } = useAppContext();
+
+    function timeAgo(timeCreated: string): string {
+        const createdDate = new Date(timeCreated);
+        const now = new Date();
+
+        const seconds = Math.floor((now.getTime() - createdDate.getTime()) / 1000);
+
+        const intervals = [
+            { label: 'year', seconds: 31536000 },
+            { label: 'month', seconds: 2592000 },
+            { label: 'week', seconds: 604800 },
+            { label: 'day', seconds: 86400 },
+            { label: 'hour', seconds: 3600 },
+            { label: 'minute', seconds: 60 },
+            { label: 'second', seconds: 1 }
+        ];
+
+        for (const interval of intervals) {
+            const time = Math.floor(seconds / interval.seconds);
+            if (time > 0) {
+                return `${time} ${interval.label}${time !== 1 ? 's' : ''} ago`;
+            }
+        }
+
+        return 'just now';
+    }
 
     useEffect(() => {
         const fetchImages = async () => {
@@ -124,7 +153,7 @@ const ThreadView: React.FC<Props> = ({ thread, setFollowedThreads, setLikedThrea
                 boxShadow: 'none',
                 borderRadius: '25px',
                 '&:hover': {
-                    boxShadow: 'none', // or any other desired style
+                    boxShadow: 'none',
                 }
             }}>
                 <Card sx={{ boxShadow: 'none' }}>
@@ -149,6 +178,16 @@ const ThreadView: React.FC<Props> = ({ thread, setFollowedThreads, setLikedThrea
                                 }}
                             >
                                 {thread.authorName}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Typography
+                                variant="body1"
+                                sx={{
+                                    marginRight: '10px',
+                                }}
+                            >
+                                {thread?.timeCreated ? timeAgo(thread?.timeCreated) : <></>}
                             </Typography>
                         </Grid>
                         <Grid onClick={() => handleOpenThread()}
@@ -227,6 +266,7 @@ const ThreadView: React.FC<Props> = ({ thread, setFollowedThreads, setLikedThrea
                                     } else {
                                         setFollowedThreads([...followedThreads, thread.id]);
                                     }
+                                    setValue(!value);
                                 }}
                                 color={followedThreads.includes(thread.id) ? 'primary' : 'default'}
                             >

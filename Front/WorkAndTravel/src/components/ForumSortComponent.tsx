@@ -10,6 +10,7 @@ import {
   InputAdornment,
   Divider,
   SelectChangeEvent,
+  useTheme,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -20,7 +21,7 @@ interface SorterProps {
 const Sorter: React.FC<SorterProps> = ({ onApply }) => {
   const [sortBy, setSortBy] = useState('new');
   const [searchQuery, setSearchQuery] = useState('');
-
+  const theme = useTheme();
   const handleSortChange = (event: SelectChangeEvent<string>) => {
     setSortBy(event.target.value as string);
   };
@@ -43,12 +44,11 @@ const Sorter: React.FC<SorterProps> = ({ onApply }) => {
     <Box
       sx={{
         margin: 'auto',
-        width: '70%',
-        background: '#fff',
+        width: { xs: '100%', md: '70%' }, // Adjust width for different screen sizes
         borderRadius: '4px',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: { xs: 'column', md: 'row' }, // Stack vertically on small screens
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '16px',
@@ -60,7 +60,7 @@ const Sorter: React.FC<SorterProps> = ({ onApply }) => {
       }}
     >
       {/* First Box */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: { xs: '100%', md: 'auto' } }}>
         <FormControl sx={{ minWidth: 120, margin: 1 }}>
           <Select
             labelId="sort-label"
@@ -82,11 +82,21 @@ const Sorter: React.FC<SorterProps> = ({ onApply }) => {
       </Box>
 
       {/* Vertical Divider */}
-      <Divider orientation="vertical" flexItem sx={{ margin: '0 16px', color: "black", backgroundColor: "black", borderWidth: "1px" }} />
+      <Divider
+        orientation="vertical"
+        flexItem
+        sx={{
+          display: { xs: 'none', md: 'block' }, // Hide divider on small screens
+          margin: '16px 16px',
+          color: theme.palette.mode === 'dark' ? "white" : "black",
+          backgroundColor: theme.palette.mode === 'dark' ? "white" : "black",
+          borderWidth: "1px",
+        }}
+      />
 
       {/* Second Box */}
-      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-        <FormControl sx={{ minWidth: 380, margin: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: { xs: '100%', md: 'auto' } }}>
+        <FormControl sx={{ flex: 1, margin: 1 }}>
           <TextField
             placeholder="Search..."
             value={searchQuery}

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 export interface Comment {
   id: number;
   jobId: number | null;
@@ -57,6 +59,7 @@ export interface ThreadDTO {
   authorName: string;
   threadTitle?: string;
   threadContent?: string;
+  timeCreated?: string;
   comments?: Threadobj[];
   images: Image[];
 }
@@ -89,8 +92,8 @@ export interface WorkExperience {
   company: string;
   role: string;
   description: string;
-  startYear: number;
-  endYear: number;
+  startDate: dayjs.Dayjs | null;
+  endDate: dayjs.Dayjs | null;
 }
 
 export interface Profile {
@@ -126,6 +129,7 @@ export interface JobDTO {
   creatorName?: string;
   currency?: string;
   description?: string;
+  timeCreated?: string;
   mainImage?: Image;
 }
 export interface JobPageDTO {
@@ -155,11 +159,13 @@ export interface Job {
   currency?: string;
   description?: string;
   contactInfo?: string;
+  timeCreated?: string;
   images?: Image[];
   comments?: Comment[];
 }
 
-export interface FormData {
+export interface ThreadCreateDTO {
+  userId: string | '';
   title: string;
   content: string;
   Images: Array<File>;

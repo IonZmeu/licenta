@@ -74,9 +74,8 @@ const Sorter: React.FC<SorterProps> = ({ onApply }) => {
   return (
     <Box
       sx={{
-        margin:'auto',
+        margin: 'auto',
         width: '90%',
-        background: '#fff',
         borderRadius: '4px',
         boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
         display: 'flex',

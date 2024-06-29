@@ -64,6 +64,9 @@ public class JobService {
         jobPageDTO.setLongCoordinate(job.getLongCoordinate());
         jobPageDTO.setLikes(likeRepository.countByJobAndLiked(job, true));
         jobPageDTO.setDislikes(likeRepository.countByJobAndLiked(job, false));
+        jobPageDTO.setEmail(job.getEmail());
+        jobPageDTO.setContactInfo(job.getContactInfo());
+        jobPageDTO.setTimeCreated(job.getTimeCreated());
         return jobPageDTO;
     }
 
@@ -158,6 +161,7 @@ public class JobService {
         jobDTO.setCreatorName(jobEntity.getAuthor().getUsername());
         jobDTO.setLikes(likeRepository.countByJobAndLiked(jobEntity, true));
         jobDTO.setDislikes(likeRepository.countByJobAndLiked(jobEntity, false));
+        jobDTO.setTimeCreated(jobEntity.getTimeCreated());
         jobEntity.getImages().stream()
                 .filter(image -> "1".equals(image.getImageType()))
                 .findFirst()
@@ -189,6 +193,7 @@ public class JobService {
 
     @Transactional
     public void followJob(Long jobId, Long userId) {
+        System.out.println("userId: " + userId + " jobId: " + jobId);
         JobEntity job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new IllegalStateException(
                         "Job with id " + jobId + " does not exist"
@@ -205,6 +210,10 @@ public class JobService {
         }
 
         userRepository.save(user);
+    }
+
+    public void deleteJob(Long id) {
+        jobRepository.deleteById(id);
     }
 }
 

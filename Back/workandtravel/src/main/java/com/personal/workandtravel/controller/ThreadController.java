@@ -1,15 +1,14 @@
 package com.personal.workandtravel.controller;
 
-import com.personal.workandtravel.dto.JobDTO;
-import com.personal.workandtravel.dto.JobsPagesResponse;
-import com.personal.workandtravel.dto.ThreadDTO;
-import com.personal.workandtravel.dto.ThreadsPagesResponse;
+import com.personal.workandtravel.dto.*;
 import com.personal.workandtravel.entity.ThreadEntity;
 import com.personal.workandtravel.service.ThreadService;
 import lombok.Data;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -40,17 +39,11 @@ public class ThreadController {
         return threadService.getThreadDTO(threadId);
     }
 
-    @PostMapping
-    public ThreadEntity addNewThread(@RequestBody ThreadEntity thread) {
-        return threadService.addNewThread(thread);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void addNewThread(@ModelAttribute ThreadCreateDTO thread) throws IOException {
+        threadService.addNewThread(thread);
     }
 
-
-
-    @DeleteMapping("{threadId}")
-    public void deleteThread(@PathVariable("threadId") Long threadId) {
-        threadService.deleteThread(threadId);
-    }
 
     @PutMapping("/follow")
     public void followThread(@RequestParam("threadId") Long threadId, @RequestParam("userId") Long userId) {
@@ -117,4 +110,9 @@ public class ThreadController {
         return sortType.equals("new") || sortType.equals("likes") || sortType.equals("hot");
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteThread(@PathVariable Long id) {
+        threadService.deleteThread(id);
+        return ResponseEntity.noContent().build();
+    }
 }

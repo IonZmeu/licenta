@@ -6,6 +6,7 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import CommentIcon from '@mui/icons-material/Comment';
 import { JobDTO, JobPageDTO, ThreadDTO } from '../interfaces/types';
 import { handleFollowJob, handleLikeJob, handleDislikeJob } from '../functions/functions';
+import { useAppContext } from '../components/AppContext';
 
 interface ActionsProps {
     job: JobDTO;
@@ -28,6 +29,7 @@ const Actions: React.FC<ActionsProps> = ({
     setFollowedJobs,
     handleCardClick,
 }) => {
+    const { value, setValue } = useAppContext();
     const handleLikeFront = (job: JobDTO) => {
         if (likedJobs.includes(job.id)) {
             setLikedJobs(likedJobs.filter(id => id !== job.id));
@@ -110,22 +112,25 @@ const Actions: React.FC<ActionsProps> = ({
                     {job.dislikes}
                 </Typography>
             </Grid>
-            <Grid item>
-                <IconButton
-                    aria-label="follow"
-                    onClick={() => {
-                        handleFollowJob(job.id, Number(localStorage.getItem('userId')));
-                        if (followedJobs.includes(job.id)) {
-                            setFollowedJobs(followedJobs.filter(id => id !== job.id));
-                        } else {
-                            setFollowedJobs([...followedJobs, job.id]);
-                        }
-                    }}
-                    color={followedJobs.includes(job.id) ? 'primary' : 'default'}
-                >
-                    <BookmarkIcon />
-                </IconButton>
-            </Grid>
+            {(job.userId !== Number(localStorage.getItem('userId'))) && (
+                <Grid item>
+                    <IconButton
+                        aria-label="follow"
+                        onClick={() => {
+                            handleFollowJob(job.id, Number(localStorage.getItem('userId')));
+                            if (followedJobs.includes(job.id)) {
+                                setFollowedJobs(followedJobs.filter(id => id !== job.id));
+                            } else {
+                                setFollowedJobs([...followedJobs, job.id]);
+                            }
+                            setValue(!value);
+                        }}
+                        color={followedJobs.includes(job.id) ? 'primary' : 'default'}
+                    >
+                        <BookmarkIcon />
+                    </IconButton>
+                </Grid>
+            )}
         </Grid>
     );
 };

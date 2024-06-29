@@ -28,9 +28,13 @@ const GoogleMapsComponent: React.FC<GoogleMapsProps> = ({ latCoordinate, longCoo
 };
 
 
-const MapForm = () => {
-  const [position, setPosition] = useState({ lat: 40.7567955, lng: -73.9512418 });
-  const mapStyles = {        
+interface MapFormProps2 {
+  position: { lat: number; lng: number };
+  setPosition: React.Dispatch<React.SetStateAction<{ lat: number; lng: number }>>;
+}
+
+const MapForm: React.FC<MapFormProps2> = ({ position, setPosition }) => {
+  const mapStyles = {
     height: "80vh",
     width: "100%"
   };
@@ -38,22 +42,21 @@ const MapForm = () => {
   return (
     <div className="test">
       <LoadScript googleMapsApiKey='AIzaSyAID844FYzOtqurEPyxm9ooZiF2s05llL0'>
-        <GoogleMap 
+        <GoogleMap
           center={{ lat: position.lat, lng: position.lng }}
           mapContainerStyle={mapStyles}
           zoom={15}
           onClick={(event) => {
-            if (event && event.latLng) { // Check if event and event.latLng is defined
+            if (event && event.latLng) {
               setPosition({
                 lat: event.latLng.lat(),
                 lng: event.latLng.lng()
-               });
-             }}}>
-          <MarkerF position={{ lat: position.lat, lng: position.lng }} 
-          />
+              });
+            }
+          }}>
+          <MarkerF position={{ lat: position.lat, lng: position.lng }} />
         </GoogleMap>
       </LoadScript>
-
     </div>
   );
 };

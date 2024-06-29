@@ -3,10 +3,13 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import {
   Avatar,
+  Box,
   Button,
   Container,
   Grid,
+  IconButton,
   Paper,
+  Snackbar,
   TextField,
   Typography,
 } from '@mui/material';
@@ -14,13 +17,21 @@ import { getDocument } from 'pdfjs-dist';
 import ImageSlider from '../components/ImageSlider';
 import { pdfjs } from 'react-pdf';
 import { Skill, Education, WorkExperience, userDTO, ProfileDTOGet } from '../interfaces/types';
-import { useParams } from 'react-router-dom';
-import { useUpdate } from '../components/UpdateContext';
+import { useAppContext } from '../components/AppContext';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { ThreadDTO, JobDTO } from '../interfaces/types';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
+import CloseIcon from '@mui/icons-material/Close';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url,
 ).toString();
+
+
 
 const ProfilePage: React.FC = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -32,11 +43,85 @@ const ProfilePage: React.FC = () => {
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([]);
   const [numPages, setNumPages] = useState<number>(0);
   const [formError, setFormError] = useState<string>('');
+  const [createdJobs, setCreatedJobs] = useState<JobDTO[]>([]);
+  const [createdThreads, setCreatedThreads] = useState<ThreadDTO[]>([]);
   const [user, setUser] = useState<userDTO>();
+  const { value, setValue } = useAppContext();
+  const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
 
+  const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const action = (
+    <React.Fragment>
+      <Button color="secondary" size="small" onClick={handleClose}>
+      </Button>
+      <IconButton
+        size="small"
+        aria-label="close"
+        color="inherit"
+        onClick={handleClose}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </React.Fragment>
+  );
+
+  const handleDeleteJob = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:4123/job/${id}`);
+    } catch (error) {
+      console.error('Failed to delete job', error);
+    }
+  };
+
+  const handleDeleteThread = async (id: number) => {
+    try {
+      await axios.delete(`http://localhost:4123/thread/${id}`);
+    } catch (error) {
+      console.error('Failed to delete thread', error);
+    }
+  };
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setProfileImage(event.target.files[0]);
+    }
+  };
+
+  const fetchThreads = async () => {
+    try {
+      const response = await axios.get<ThreadDTO[]>('http://localhost:4123/user/threads/followed', {
+        params: {
+          userId: localStorage.getItem('userId')
+        }
+      });
+      const threads = response.data;
+      const created = threads.filter(thread => thread.authorId === parseInt(localStorage.getItem('userId') || ""));
+      setCreatedThreads(created);
+    } catch (error) {
+      console.log('Error fetching threads', error);
+    }
+  };
+
+  const fetchJobs = async () => {
+    try {
+      const response = await axios.get<JobDTO[]>('http://localhost:4123/user/jobs/followed', {
+        params: {
+          userId: localStorage.getItem('userId')
+        }
+      });
+      const jobs = response.data;
+      console.log(response.data);
+      const created = jobs.filter(job => job.userId === parseInt(localStorage.getItem('userId') || ""));
+      setCreatedJobs(created);
+    } catch (error) {
+      console.log('Error fetching threads', error);
     }
   };
 
@@ -88,10 +173,39 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  const onOpenJob = (jobId: number) => {
+    navigate(`/job/${jobId}`);
+  }
+  const onDeleteJob = (jobId: number) => {
+    handleDeleteJob(jobId);
+    setValue(!value);
+  }
+  const onOpenThread = (threadId: number) => {
+    navigate(`/forum/thread/${threadId}`);
+  }
+  const onDeleteThread = (threadId: number) => {
+    handleDeleteThread(threadId);
+    setValue(!value);
+  }
+
   const handleAddSkill = () => {
     setSkills((prevSkills) => [
       ...prevSkills,
       { id: prevSkills.length + 1, name: '' },
+    ]);
+  };
+
+  const handleAddWorkExperience = () => {
+    setWorkExperiences((prevExperiences) => [
+      ...prevExperiences,
+      {
+        id: prevExperiences.length + 1,
+        company: '',
+        role: '',
+        description: '',
+        startDate: dayjs(), // Initialize startDate with current date if needed
+        endDate: dayjs(),   // Initialize endDate with current date if needed
+      } as WorkExperience, // Ensure type assertion to WorkExperience
     ]);
   };
 
@@ -131,34 +245,29 @@ const ProfilePage: React.FC = () => {
     setEducation(updatedEducation);
   };
 
-  const handleAddWorkExperience = () => {
-    setWorkExperiences((prevExperiences) => [
-      ...prevExperiences,
-      {
-        id: prevExperiences.length + 1,
-        company: '',
-        role: '',
-        description: '',
-        startYear: 0,
-        endYear: 0,
-      },
-    ]);
+  const handleWorkExperienceChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    expId: number,
+    field: keyof WorkExperience
+  ) => {
+    const existingExp = workExperiences.find(exp => exp.id === expId);
+
+    if (!existingExp) {
+      console.error(`Work experience with id ${expId} not found.`);
+      return; // Handle or exit gracefully if no matching experience found
+    }
+
+    const updatedExp: WorkExperience = {
+      ...existingExp,
+      [field]: e.target.value
+    };
+    onUpdateWorkExperience(updatedExp);
   };
 
   const handleRemoveWorkExperience = () => {
     setWorkExperiences((prevExperiences) => prevExperiences.slice(0, -1));
   };
 
-  const handleWorkExperienceChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    id: number,
-    field: string,
-  ) => {
-    const updatedExperiences = workExperiences.map((exp) =>
-      exp.id === id ? { ...exp, [field]: event.target.value } : exp,
-    );
-    setWorkExperiences(updatedExperiences);
-  };
 
   const handleResetAll = () => {
     setProfileImage(null);
@@ -183,54 +292,12 @@ const ProfilePage: React.FC = () => {
     setProfileImage(null);
   };
 
-  const fetchImage = async (imageId: number | string): Promise<string> => {
-    try {
-      const response = await axios.get(`http://localhost:4123/image/${imageId}`);
-      return response.data; // Assuming backend returns the base64 string directly
-    } catch (error) {
-      console.log('Error fetching image: ', error);
-      return "";
-    }
-  };
 
-  const base64ToBlob = (base64: string, type: string = 'image/jpeg'): Blob | null => {
-    try {
-      const byteCharacters = atob(base64);
-      const byteArrays = [];
 
-      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-        const slice = byteCharacters.slice(offset, offset + 512);
-
-        const byteNumbers = new Array(slice.length);
-        for (let i = 0; i < slice.length; i++) {
-          byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
-      }
-
-      return new Blob(byteArrays, { type });
-    } catch (e) {
-      console.error('Invalid base64 string:', base64);
-      return null;
-    }
-  };
-
-  const convertFilesToBase64 = (files: File[]): Promise<string[]> => {
-    const promises = files.map(file => {
-      return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          resolve(reader.result as string);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    });
-    return Promise.all(promises);
-  };
-
+  useEffect(() => {
+    fetchJobs();
+    fetchThreads();
+  }, [value]);
 
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
@@ -239,47 +306,29 @@ const ProfilePage: React.FC = () => {
       try {
         const userId = await localStorage.getItem('userId');
         if (userId) {
-          const response = await axios.get<ProfileDTOGet>(`http://localhost:4123/profile/${userId}`);
-          const profileData = response.data;
-          console.log(response.data);
+          const profileResponse = await axios.get<ProfileDTOGet>(`http://localhost:4123/profile/${userId}`);
+          const profileData = profileResponse.data;
 
           if (isMounted) {
+            // Set skills, education, work experiences
             setSkills(profileData.skills || []);
             setEducation(profileData.education || []);
-            setWorkExperiences(profileData.workExperiences || []);
 
-            if (profileData.pfpImage) {
-              const pfp = await fetchImage(profileData.pfpImage.id);
-              const base64String = pfp.split(',')[1];
-              const pfpBlob = base64ToBlob(base64String);
-              if (pfpBlob) {
-                const pfpFile = new File([pfpBlob], 'profile_image.jpg', { type: 'image/jpeg' });
-                if (isMounted) setProfileImage(pfpFile);
-              }
+            // Convert Java LocalDateTime to dayjs for work experiences
+            const updatedWorkExperiences = profileData.workExperiences.map((experience: any) => {
+              // Assuming startDate and endDate are fields in each experience object
+              const startDate = dayjs(experience.startDate);
+              const endDate = dayjs(experience.endDate);
+              return {
+                ...experience,
+                startDate,
+                endDate,
+              };
+            });
+
+            if (isMounted) {
+              setWorkExperiences(updatedWorkExperiences);
             }
-
-            if (profileData.cvImages) {
-              const cvImageBase64s = await Promise.all(
-                profileData.cvImages.map(async (image) => {
-                  const cvImg = await fetchImage(image.id);
-                  return cvImg.split(',')[1];
-                })
-              );
-
-              const cvFiles = cvImageBase64s.map((base64, index) => {
-                const blob = base64ToBlob(base64);
-                if (blob) {
-                  return new File([blob], `cv_image_${index + 1}.jpg`, { type: 'image/jpeg' });
-                }
-                return null;
-              }).filter(file => file !== null) as File[];
-              if (isMounted) setCvImagesFiles(cvFiles);
-              const base64Images = await convertFilesToBase64(cvFiles);
-              setCvImages(base64Images);
-            }
-
-            const response = await axios.get<userDTO>(`http://localhost:4123/user/${userId}`);
-            setUser(response.data);
           }
         } else {
           console.error('User ID not found in localStorage.');
@@ -329,13 +378,63 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
     }
-    const { triggerUpdate } = useUpdate();
-    triggerUpdate();
+    setValue(!value);
+    setOpen(true);
   };
 
   const onCVImageClick = () => {
     console.log('Clicked on image of CV');
   };
+
+  const handleDateChange = (date: dayjs.Dayjs | null, expId: number, field: 'startDate' | 'endDate') => {
+    const existingExp = workExperiences.find(exp => exp.id === expId);
+
+    if (!existingExp) {
+      console.error(`Work experience with id ${expId} not found.`);
+      return; // Handle or exit gracefully if no matching experience found
+    }
+
+    // Check if date is null (picker cleared)
+    if (date === null) {
+      console.error(`Date is null for ${field} in work experience id ${expId}.`);
+      return; // Handle or exit gracefully if date is null
+    }
+
+    // Validate if date is a dayjs object
+    if (!dayjs.isDayjs(date)) {
+      console.error(`Invalid date format for ${field} in work experience id ${expId}. Expected dayjs object.`);
+      return; // Handle or exit gracefully if date is not a dayjs object
+    }
+
+    // Construct updated experience with the new date
+    const updatedExp: WorkExperience = {
+      ...existingExp,
+      [field]: date ? dayjs(date) : dayjs(), // Convert Date to dayjs or use current dayjs date
+    };
+
+    onUpdateWorkExperience(updatedExp);
+  };
+
+  function onUpdateWorkExperience(updatedExp: WorkExperience) {
+    setWorkExperiences((prevExperiences) => {
+      // Find the index of the updated work experience by id
+      const index = prevExperiences.findIndex((exp) => exp.id === updatedExp.id);
+
+      if (index === -1) {
+        console.error(`Work experience with id ${updatedExp.id} not found.`);
+        return prevExperiences; // Return previous state unchanged if not found
+      }
+
+      // Create a new array with the updated work experience object
+      const updatedExperiences = [...prevExperiences];
+      updatedExperiences[index] = {
+        ...updatedExperiences[index], // Preserve other fields
+        ...updatedExp, // Update with new values
+      };
+
+      return updatedExperiences;
+    });
+  }
 
   return (
     <Container maxWidth="md">
@@ -344,7 +443,7 @@ const ProfilePage: React.FC = () => {
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Paper elevation={3} style={{ padding: '20px', textAlign: 'center' }}>
+          <Paper elevation={3} sx={{ padding: '20px', textAlign: 'center' }}>
             <Typography variant="h6" gutterBottom>
               Profile Image
             </Typography>
@@ -356,19 +455,18 @@ const ProfilePage: React.FC = () => {
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              style={{ marginTop: '10px' }}
             />
             <Button
               variant="outlined"
               onClick={handleResetProfileImage}
-              style={{ marginTop: '10px' }}
+              sx={{ marginTop: '10px' }}
             >
               Reset Profile Image
             </Button>
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
+          <Paper elevation={3} sx={{ padding: '20px' }}>
             <Typography variant="h6" gutterBottom>
               CV (PDF)
             </Typography>
@@ -382,7 +480,7 @@ const ProfilePage: React.FC = () => {
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
+          <Paper elevation={3} sx={{ padding: '20px' }}>
             <Button variant="outlined" onClick={handleAddSkill}>
               Add Skill
             </Button>
@@ -399,13 +497,13 @@ const ProfilePage: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   handleSkillChange(e, skill.id)
                 }
-                style={{ margin: '5px 0px' }}
+                sx={{ margin: '5px 0px' }}
               />
             ))}
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
+          <Paper elevation={3} sx={{ padding: '20px' }}>
             <Button variant="outlined" onClick={handleAddEducation}>
               Add Education
             </Button>
@@ -420,7 +518,7 @@ const ProfilePage: React.FC = () => {
                   fullWidth
                   value={edu.degree}
                   onChange={(e) => handleEducationChange(e, edu.id, 'degree')}
-                  style={{ margin: '5px 0px' }}
+                  sx={{ margin: '5px 0px' }}
                 />
                 <TextField
                   label="Institution"
@@ -428,7 +526,7 @@ const ProfilePage: React.FC = () => {
                   fullWidth
                   value={edu.institution}
                   onChange={(e) => handleEducationChange(e, edu.id, 'institution')}
-                  style={{ margin: '5px 0px' }}
+                  sx={{ margin: '5px 0px' }}
                 />
                 <TextField
                   label="Year"
@@ -437,14 +535,14 @@ const ProfilePage: React.FC = () => {
                   type="number"
                   value={edu.year}
                   onChange={(e) => handleEducationChange(e, edu.id, 'year')}
-                  style={{ margin: '5px 0px' }}
+                  sx={{ margin: '5px 0px' }}
                 />
               </div>
             ))}
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper elevation={3} style={{ padding: '20px' }}>
+          <Paper elevation={3} sx={{ padding: '20px' }}>
             <Button variant="outlined" onClick={handleAddWorkExperience}>
               Add Work Experience
             </Button>
@@ -459,7 +557,7 @@ const ProfilePage: React.FC = () => {
                   fullWidth
                   value={exp.company}
                   onChange={(e) => handleWorkExperienceChange(e, exp.id, 'company')}
-                  style={{ margin: '5px 0px' }}
+                  sx={{ margin: '5px 0px' }}
                 />
                 <TextField
                   label="Role"
@@ -467,7 +565,7 @@ const ProfilePage: React.FC = () => {
                   fullWidth
                   value={exp.role}
                   onChange={(e) => handleWorkExperienceChange(e, exp.id, 'role')}
-                  style={{ margin: '5px 0px' }}
+                  sx={{ margin: '5px 0px' }}
                 />
                 <TextField
                   label="Description"
@@ -475,26 +573,27 @@ const ProfilePage: React.FC = () => {
                   fullWidth
                   value={exp.description}
                   onChange={(e) => handleWorkExperienceChange(e, exp.id, 'description')}
-                  style={{ margin: '5px 0px' }}
+                  sx={{ margin: '5px 0px' }}
                 />
-                <TextField
-                  label="Start Year"
-                  variant="outlined"
-                  fullWidth
-                  type="number"
-                  value={exp.startYear}
-                  onChange={(e) => handleWorkExperienceChange(e, exp.id, 'startYear')}
-                  style={{ margin: '5px 0px' }}
-                />
-                <TextField
-                  label="End Year"
-                  variant="outlined"
-                  fullWidth
-                  type="number"
-                  value={exp.endYear}
-                  onChange={(e) => handleWorkExperienceChange(e, exp.id, 'endYear')}
-                  style={{ margin: '5px 0px' }}
-                />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Start Date"
+                    value={exp.startDate}  // Assuming exp.startDate is a Date object
+                    onChange={(date) => handleDateChange(date, exp.id, 'startDate')}
+                    disableFuture
+                    openTo="day"
+                    views={['year', 'month', 'day']}
+                  />
+
+                  <DatePicker
+                    label="End Date"
+                    value={exp.endDate}  // Assuming exp.endDate is a Date object
+                    onChange={(date) => handleDateChange(date, exp.id, 'endDate')}
+                    disableFuture
+                    openTo="day"
+                    views={['year', 'month', 'day']}
+                  />
+                </LocalizationProvider>
               </div>
             ))}
           </Paper>
@@ -506,10 +605,85 @@ const ProfilePage: React.FC = () => {
           <Button variant="outlined" color="secondary" onClick={handleResetAll}>
             Reset All
           </Button>
+          <Snackbar
+            open={open}
+            autoHideDuration={6000}
+            onClose={handleClose}
+            message="Profile Saved"
+            action={action}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Typography variant="body1" gutterBottom>
+            Created Jobs
+          </Typography>
+          {createdJobs.map((job) => (
+            <Box
+              key={job.id}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              padding={1}
+              border={1}
+              borderColor="grey.300"
+              borderRadius={2}
+              marginBottom={1}
+            >
+              <Typography
+                variant="body2"
+                onClick={() => onOpenJob(job.id)}
+                sx={{ cursor: 'pointer' }}
+              >
+                {job.name}
+              </Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => onDeleteJob(job.id)}
+              >
+                Delete
+              </Button>
+            </Box>
+          ))}
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Typography variant="body1" gutterBottom>
+            Created Threads
+          </Typography>
+          {createdThreads.map((thread) => (
+            <Box
+              key={thread.id}
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              padding={1}
+              border={1}
+              borderColor="grey.300"
+              borderRadius={2}
+              marginBottom={1}
+            >
+              <Typography
+                variant="body2"
+                onClick={() => onOpenThread(thread.id)}
+                sx={{ cursor: 'pointer' }}
+              >
+                {thread.threadTitle}
+              </Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => onDeleteThread(thread.id)}
+              >
+                Delete
+              </Button>
+            </Box>
+          ))}
         </Grid>
       </Grid>
     </Container>
   );
 }
 
-export default ProfilePage; 
+export default ProfilePage;
+
+

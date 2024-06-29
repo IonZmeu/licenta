@@ -53,6 +53,11 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
     List<JobEntity> findLikedJobsByUserId(@Param("userId") Long userId);
     @Query("SELECT DISTINCT l.job FROM LikeEntity l WHERE l.user.id = :userId AND l.liked = false")
     List<JobEntity> findDislikedJobsByUserId(@Param("userId") Long userId);
-    @Query("SELECT j FROM JobEntity j JOIN j.usersFollowing u WHERE u.id = :userId")
+
+    @Query("SELECT j FROM JobEntity j JOIN j.author u WHERE u.id = :userId")
     List<JobEntity> findFollowedJobsByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT j FROM JobEntity j WHERE j.author.id = :userId OR EXISTS (SELECT u FROM j.usersFollowing u WHERE u.id = :userId)")
+    List<JobEntity> findAllFollowedAndCreatedByUserId(@Param("userId") Long userId);
+
 }

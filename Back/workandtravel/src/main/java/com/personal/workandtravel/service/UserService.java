@@ -94,12 +94,7 @@ public class UserService {
                 ));
     }
 
-    public List<ThreadDTO> getFollowedThreadsByUserId(Long userId) {
-        List<ThreadEntity> threadsEntity = threadRepository.findAllByUserId(userId);
-        return threadsEntity.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
+
 
     private ThreadDTO convertToDTO(ThreadEntity threadEntity) {
         ThreadDTO threadDTO = new ThreadDTO();
@@ -220,8 +215,15 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public List<ThreadDTO> getFollowedThreadsByUserId(Long userId) {
+        List<ThreadEntity> threadsEntity = threadRepository.findAllFollowedAndCreatedByUserId(userId);
+        return threadsEntity.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
     public List<JobDTO> getFollowedJobsByUserId(Long userId) {
-        List<JobEntity> jobsEntity = jobRepository.findFollowedJobsByUserId(userId);
+        List<JobEntity> jobsEntity = jobRepository.findAllFollowedAndCreatedByUserId(userId);
+
         List<JobDTO> jobDTOS = new ArrayList<>();
         for (JobEntity job : jobsEntity) {
             JobDTO jobDTO = new JobDTO();
@@ -230,6 +232,7 @@ public class UserService {
             jobDTO.setCountry(job.getCountry());
             jobDTO.setSalary(job.getSalary());
             jobDTO.setCurrency(job.getCurrency());
+            jobDTO.setUserId(job.getAuthor().getId());
             jobDTOS.add(jobDTO);
         }
         return jobDTOS;

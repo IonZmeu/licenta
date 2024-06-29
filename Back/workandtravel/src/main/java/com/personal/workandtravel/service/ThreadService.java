@@ -1,6 +1,8 @@
 package com.personal.workandtravel.service;
 
+import com.personal.workandtravel.dto.ThreadCreateDTO;
 import com.personal.workandtravel.dto.ThreadDTO;
+import com.personal.workandtravel.entity.ImageEntity;
 import com.personal.workandtravel.entity.ThreadEntity;
 import com.personal.workandtravel.entity.UserEntity;
 import com.personal.workandtravel.repository.LikeRepository;
@@ -16,7 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -117,14 +122,38 @@ public class ThreadService {
                 .threadContent(thread.getThreadContent())
                 .comments(thread.getComments())
                 .images(thread.getImages())
+                .timeCreated(thread.getTimeCreated())
                 .build();
     }
 
     public ThreadEntity getThread(Long id) {
         return threadRepository.findById(id).orElse(null);
     }
-    public ThreadEntity addNewThread(ThreadEntity thread) {
-        return threadRepository.save(thread);
+
+
+    public void addNewThread(ThreadCreateDTO threadCreateDTO) throws IOException {
+        UserEntity author = userRepository.findById(Long.valueOf(threadCreateDTO.getUserId()))
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        List<ImageEntity> imagePaths = new ArrayList<>();
+        if(threadCreateDTO.getImages() != null ) {
+            for (MultipartFile image : threadCreateDTO.getImages()) {
+                String uuid = UUID.randomUUID().toString();
+                imagePaths.add(new ImageEntity(uuid, "0"));
+                File file = new File("C:\\Users\\zmeui\\Licenta\\DB\\" + uuid + ".jpg");
+                image.transferTo(file);
+            }
+        }
+
+
+        ThreadEntity thread = new ThreadEntity(
+                threadCreateDTO.getTitle(),
+                threadCreateDTO.getDescription(),
+                author,
+                imagePaths
+        );
+
+        threadRepository.save(thread);
     }
 
     public void deleteThread(Long id) {
@@ -244,6 +273,7 @@ public class ThreadService {
         threadDTO.setImages(thread.getImages());
         threadDTO.setLikes(likeRepository.countByThreadAndLiked(thread, true));
         threadDTO.setDislikes(likeRepository.countByThreadAndLiked(thread, false));
+        threadDTO.setTimeCreated(thread.getTimeCreated());
 
         return threadDTO;
     }

@@ -1,45 +1,96 @@
 import { ChangeEvent, useState } from 'react';
 import { Box, Button, Card, CardActions, CardContent, Grid, IconButton, TextField, Typography } from '@mui/material';
 import { Delete as DeleteIcon } from '@mui/icons-material';
-import { FormData } from '../interfaces/types';
+import { ThreadCreateDTO } from '../interfaces/types';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import Snackbar from '@mui/material/Snackbar';
+import CloseIcon from '@mui/icons-material/Close';
+import React from 'react';
 
 const ThreadCreateForm = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [Images, setImages] = useState<File[]>([]);
-
-  const [formData, setFormData] = useState<FormData>({
+  const [titleError, setTitleError] = useState<string>('');
+  const [contentError, setContentError] = useState<string>('');
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<ThreadCreateDTO>({
+    userId: localStorage.getItem('userId') || '',
     title: '',
     content: '',
     Images: []
   });
+  const [open, setOpen] = React.useState(false);
+
+  const handleClose = (event: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      navigate('/');
+      return;
+    }
+    navigate('/');
+    setOpen(false);
+  };
+
+  const action = (
+    <React.Fragment>
+      <IconButton
+        size="small"
+        aria-label="close"
+        color="inherit"
+        onClick={handleClose}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </React.Fragment>
+  );
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (name === 'title') {
       setTitle(value);
+      setTitleError(value.trim() ? '' : 'Title is required');
     } else if (name === 'content') {
       setContent(value);
+      setContentError(value.trim() ? '' : 'Content is required');
     }
   };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setImages(files);
-    setFormData(prevFormData => ({ ...prevFormData, Images: files }));
   };
 
   const handleDeleteImage = (index: number) => {
     const updatedImages = [...Images];
     updatedImages.splice(index, 1);
     setImages(updatedImages);
-    setFormData(prevFormData => ({ ...prevFormData, Images: updatedImages }));
   };
 
   const handleSubmit = () => {
-    const formData: FormData = { title, content, Images };
+    // Validate title and content
+    if (!title.trim()) {
+      setTitleError('Title is required');
+      return;
+    }
+    if (!content.trim()) {
+      setContentError('Content is required');
+      return;
+    }
+
+    // Proceed with form submission logic here
+    const userId = localStorage.getItem('userId') || '';
+    const formData: ThreadCreateDTO = { userId, title, content, Images };
     console.log(formData);
-    // Add your logic to submit the form data
+
+
+    axios.post('/thread', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+      .then((res) => console.log(res))
+      .catch((err) => console.error(err));
+    console.log("submitted data");
+    setOpen(true);
   };
 
   return (
@@ -61,7 +112,6 @@ const ThreadCreateForm = () => {
             padding: 4,
             border: '1px solid #ccc',
             borderRadius: 2,
-            backgroundColor: '#f9f9f9',
           }}
         >
           <Typography variant="h5" component="div" sx={{ textAlign: 'center', marginBottom: 3 }}>
@@ -69,13 +119,32 @@ const ThreadCreateForm = () => {
           </Typography>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <TextField label="Title" name="title" value={title} onChange={handleInputChange} fullWidth />
+              <TextField
+                label="Title"
+                name="title"
+                value={title}
+                onChange={handleInputChange}
+                fullWidth
+                error={!!titleError}
+                helperText={titleError}
+              />
             </Grid>
             <Grid item xs={12}>
-              <TextField label="Content" name="content" value={content} onChange={handleInputChange} fullWidth multiline rows={4} />
+              <TextField
+                label="Content"
+                name="content"
+                value={content}
+                onChange={handleInputChange}
+                fullWidth
+                multiline
+                rows={4}
+                error={!!contentError}
+                helperText={contentError}
+              />
             </Grid>
             {/* Add other input fields */}
           </Grid>
+
           <Box
             sx={{
               display: 'flex',
@@ -87,13 +156,12 @@ const ThreadCreateForm = () => {
               padding: 4,
               border: '1px solid #ccc',
               borderRadius: 2,
-              backgroundColor: '#f9f9f9'
             }}
           >
             <Typography variant="h5" component="div" sx={{ textAlign: 'center', marginBottom: 3 }}>
               Images
             </Typography>
-            {/* Images Input */}
+
             <label htmlFor="image-input" style={{ display: 'block', marginBottom: '8px' }}>
               Choose Image(s)
             </label>
@@ -116,10 +184,10 @@ const ThreadCreateForm = () => {
                   <Card
                     key={index}
                     sx={{
-                      maxWidth: 'calc(50% - 8px)', 
+                      maxWidth: 'calc(50% - 8px)',
                       margin: '0 4px 8px',
                       '@media (max-width: 600px)': {
-                        maxWidth: '100%', 
+                        maxWidth: '100%',
                         margin: '0 0 8px'
                       }
                     }}
@@ -142,6 +210,13 @@ const ThreadCreateForm = () => {
           <Button type="submit" variant="contained" sx={{ width: '150px', margin: '20px auto' }}>
             Submit
           </Button>
+          <Snackbar
+            open={open}
+            autoHideDuration={6000}
+            onClose={handleClose}
+            message="Thread created, navigating to home page"
+            action={action}
+          />
         </Box>
       </Box>
     </div>

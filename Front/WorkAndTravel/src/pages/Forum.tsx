@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from 'axios';
 import { useNavigate, useParams } from "react-router-dom";
 import ThreadView from "../components/ThreadView";
-import { Divider, Pagination } from "@mui/material";
+import { Box, Container, Divider, Pagination } from "@mui/material";
 import Sorter from '../components/ForumSortComponent';
 import { ThreadDTO } from '../interfaces/types';
 
@@ -58,6 +58,7 @@ const Forum = () => {
   };
 
 
+
   useEffect(() => {
     console.log("loaded");
 
@@ -82,9 +83,6 @@ const Forum = () => {
         const dislikedResponse = await axios.get(`http://localhost:4123/user/${Number(localStorage.getItem('userId'))}/disliked-threads`);
         setDislikedThreads(dislikedResponse.data);
 
-        console.log(likedThreads);
-        console.log(dislikedThreads);
-        console.log(followedThreads);
         console.log("Finished fetching user actions");
       } catch (error) {
         console.log('Error fetching user actions:', error);
@@ -101,28 +99,30 @@ const Forum = () => {
   };
 
   return (
-    <div>
+    <Box>
       <Sorter onApply={handleApply} />
-      {threads && threads.map((thread, index) => (
-        <div key={index}>
-          <ThreadView
-            thread={thread}
-            setFollowedThreads={setFollowedThreads}
-            setLikedThreads={setLikedThreads}
-            setDislikedThreads={setDislikedThreads}
-            followedThreads={followedThreads}
-            likedThreads={likedThreads}
-            dislikedThreads={dislikedThreads}
-          />
-          <Divider style={{ color: "black", backgroundColor: "black", width: '70%', margin: "auto", borderWidth: "1px", marginTop: "25px" }} />
+      <Container>
+        {threads && threads.map((thread, index) => (
+          <div key={index}>
+            <ThreadView
+              thread={thread}
+              setFollowedThreads={setFollowedThreads}
+              setLikedThreads={setLikedThreads}
+              setDislikedThreads={setDislikedThreads}
+              followedThreads={followedThreads}
+              likedThreads={likedThreads}
+              dislikedThreads={dislikedThreads}
+            />
+            <Divider style={{ color: "black", backgroundColor: "black", width: '70%', margin: "auto", borderWidth: "1px", marginTop: "25px" }} />
+          </div>
+        ))}
+        <div className="d-flex justify-content-center">
+          <div style={{ fontSize: '2.5rem' }}>
+            <Pagination count={Number(totalPages)} page={Number(currentPage)} onChange={handleChangePagination} />
+          </div>
         </div>
-      ))}
-      <div className="d-flex justify-content-center">
-        <div style={{ fontSize: '2.5rem' }}>
-          <Pagination count={Number(totalPages)} page={Number(currentPage)} onChange={handleChangePagination} />
-        </div>
-      </div>
-    </div>
+      </Container>
+    </Box>
   );
 };
 

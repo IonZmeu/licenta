@@ -14,7 +14,7 @@ import ImageSlider from '../components/ImageSlider';
 import { pdfjs } from 'react-pdf';
 import { Skill, Education, WorkExperience, ProfileDTOGet } from '../interfaces/types';
 import { useParams } from 'react-router-dom';
-
+import dayjs from 'dayjs';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
@@ -218,13 +218,13 @@ const ProfileOther: React.FC = () => {
               Work Experience
             </Typography>
             {workExperiences.map((exp) => (
-              <div key={exp.id} style={roundedTypographyWidthStyle} >
+              <div key={exp.id} style={roundedTypographyWidthStyle}>
                 <Typography variant="body1" gutterBottom>
                   <strong>Role:</strong> {exp.role}<br />
                   <strong>Company:</strong> {exp.company}<br />
-                  <strong>Company:</strong> {exp.description}<br />
-                  <strong>Start Year:</strong> {exp.startYear}<br />
-                  <strong>End Year:</strong> {exp.endYear}
+                  <strong>Description:</strong> {exp.description}<br />
+                  <strong>Start Date:</strong> {exp.startDate ? dayjs(exp.startDate).format('YYYY-MM-DD') : 'N/A'}<br />
+                  <strong>End Date:</strong> {exp.endDate ? dayjs(exp.endDate).format('YYYY-MM-DD') : 'N/A'}
                 </Typography>
               </div>
             ))}

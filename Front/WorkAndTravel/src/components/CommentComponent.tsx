@@ -6,6 +6,8 @@ import ReplyIcon from '@mui/icons-material/Reply';
 import { handleDislikeComment, handleLikeComment } from '../functions/functions';
 import { CommentDTO } from '../interfaces/types';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
 
 interface CommentComponentProps {
   comment: CommentDTO;
@@ -18,7 +20,7 @@ interface CommentComponentProps {
 }
 
 
-const fetchImage = async (imageId: number | string): Promise<string> => {
+const fetchPfp = async (imageId: number | string): Promise<string> => {
   try {
     const response = await axios.get(`http://localhost:4123/image/pfp/${imageId}`);
     return response.data; // Assuming backend returns the base64 string directly
@@ -32,6 +34,10 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ comment, handleRepl
   const [showReplies, setShowReplies] = useState(false);
   const [pfp, setPfp] = useState<string>("");
 
+  const navigate = useNavigate();
+  const handleOpenProfile = (id: number) => {
+    navigate(`/profile/${id}`);
+  };
   const toggleReplies = () => {
     setShowReplies(!showReplies);
   };
@@ -84,7 +90,7 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ comment, handleRepl
 
   useEffect(() => {
     const fetchAndSetImage = async (authorId: string | number) => {
-      const profileImage = await fetchImage(authorId);
+      const profileImage = await fetchPfp(authorId);
       setPfp(profileImage);
     };
 
@@ -94,8 +100,15 @@ const CommentComponent: React.FC<CommentComponentProps> = ({ comment, handleRepl
   return (
     <div style={{ marginLeft: `${comment.depth * 20}px`, borderLeft: '2px solid #ccc', padding: '5px', marginBottom: '10px' }}>
       <Grid container alignItems="center">
-        <Grid item>{pfp ? (<Avatar src={pfp}></Avatar>) : <Avatar style={{ marginRight: '10px' }}>{comment.username ? comment.username.slice(0, 2).toUpperCase() : 'NA'}</Avatar>}</Grid>
-        <Grid item> {comment.username}</Grid>
+        <Grid item>{pfp ? (<Avatar src={pfp}> </Avatar>) : <Avatar style={{ marginRight: '10px' }}>{comment.username ? comment.username.slice(0, 2).toUpperCase() : 'NA'}</Avatar>}</Grid>
+        <Grid item onClick={() => handleOpenProfile(comment.userId)} sx={{
+          cursor: 'pointer',
+          paddingLeft: '10px',
+          '&:hover': {
+            boxShadow: 'none',
+            textDecoration: 'underline'
+          },
+        }}> {comment.username}</Grid>
       </Grid>
       <p>{comment.commentContent}</p>
       <Box >
