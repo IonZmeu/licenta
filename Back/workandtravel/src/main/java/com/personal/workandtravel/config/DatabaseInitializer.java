@@ -1,12 +1,10 @@
 package com.personal.workandtravel.config;
 
 import com.personal.workandtravel.entity.*;
-import com.personal.workandtravel.repository.CommentRepository;
-import com.personal.workandtravel.repository.JobRepository;
-import com.personal.workandtravel.repository.ThreadRepository;
-import com.personal.workandtravel.repository.UserRepository;
+import com.personal.workandtravel.repository.*;
 import com.personal.workandtravel.service.CurrencyConversionService;
 import jakarta.transaction.Transactional;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,10 +12,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.money.convert.CurrencyConversion;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
@@ -29,6 +30,8 @@ public class DatabaseInitializer implements CommandLineRunner {
     ThreadRepository threadRepository;
     @Autowired
     CommentRepository commentRepository;
+    @Autowired
+    private LikeRepository likeRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
@@ -43,40 +46,122 @@ public class DatabaseInitializer implements CommandLineRunner {
         jobConfig();
         threadConfig();
         commentConfig();
+        likeConfig();
 
         System.out.println("Database initialized!");
     }
 
+    private void likeConfig() {
+        List<Long> userIds = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L);
+        List<UserEntity> users = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toList());
+
+
+        JobEntity job1 = jobRepository.findById(1L).orElseThrow();
+        JobEntity job2 = jobRepository.findById(2L).orElseThrow();
+        ThreadEntity thread1 = threadRepository.findById(1L).orElseThrow();
+        ThreadEntity thread2 = threadRepository.findById(2L).orElseThrow();
+
+        for (int i = 0; i <= 9; i++) {
+            likeRepository.save(new LikeEntity(users.get(i), job1, true));
+        }
+
+        for (int i = 1; i <= 9; i++) {
+            likeRepository.save(new LikeEntity(users.get(i), job2, true));
+        }
+
+        for (int i = 0; i <= 9; i++) {
+            likeRepository.save(new LikeEntity(users.get(i), thread1, true));
+        }
+
+        for (int i = 1; i <= 9; i++) {
+            likeRepository.save(new LikeEntity(users.get(i), thread2, true));
+        }
+
+    }
+
     public void userConfig() {
         UserEntity usr1 = new UserEntity(
-                "user1",
+                "Ion",
+                "zmeuion@gmail.com",
+                passwordEncoder.encode("password")
+        );
+
+        UserEntity usr2 = new UserEntity(
+                "Andrei",
                 "smth@gmail.com",
                 passwordEncoder.encode("123456")
         );
 
-        UserEntity usr2 = new UserEntity(
-                "user2",
-                "smthelse@gmail.com",
-                passwordEncoder.encode("password")
+        UserEntity usr3 = new UserEntity(
+                "Mihai",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
         );
 
-        userRepository.saveAll(
-                List.of(usr1, usr2)
+        UserEntity usr4 = new UserEntity(
+                "Teodor",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
         );
+
+        UserEntity usr5 = new UserEntity(
+                "Alex",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
+        );
+
+        UserEntity usr6 = new UserEntity(
+                "Maria",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
+        );
+
+        UserEntity usr7 = new UserEntity(
+                "Stefana",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
+        );
+
+        UserEntity usr8 = new UserEntity(
+                "Elena",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
+        );
+
+        UserEntity usr9 = new UserEntity(
+                "Alexandra",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
+        );
+        UserEntity usr10 = new UserEntity(
+                "Ioana",
+                "smth@gmail.com",
+                passwordEncoder.encode("123456")
+        );
+
+        usr2.setImages(List.of(new ImageEntity("pfp1", "1"), new ImageEntity("cv", "0")));
+        usr2.setEducations(List.of(new EducationEntity("Bachelor's Degree in Computer Science", "University of Bucharest", 3, usr2)));
+        usr2.setSkills(List.of(new SkillEntity("Java",usr2), new SkillEntity("Python",usr2), new SkillEntity("SQL",usr2)));
+        usr2.setWorkExperiences(List.of(new WorkExperienceEntity("Software Developer", "TechStart", "Developed web applications using Java and Spring Boot", LocalDateTime.of(2019, Month.JANUARY, 1, 0, 0), LocalDateTime.of(2021, Month.JANUARY, 1, 0, 0), usr2)));
+        userRepository.saveAll(
+                List.of(usr1, usr2, usr3, usr4, usr5, usr6, usr7, usr8, usr9, usr10)
+        );
+
     }
 
     public void jobConfig() {
         JobEntity usa = new JobEntity(
-                "sunnyholiday",
+                "Hoffman's",
                 "work@gmail.com",
                 "United States",
                 "39.045753",
                 "-76.641273",
-                "Software Engineer",
+                "Sales Associate",
                 1200,
                 currencyConversionService.convertToUSD(1200, "USD"),
                 "USD",
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
+                "Job Responsibilities: Provide a fun, full-service experience while representing our brand. Show Hoffman's culture and create new sweets and treats. Ensure food safety, perform cash handling accurately and have FUN!",
                 "077965446 whatsapp, 077965446 phone",
                 List.of(new ImageEntity("engineer", "1")), // Using List.of() for a single element
                 userRepository.findById(1L).orElseThrow()
@@ -159,7 +244,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Sed blandit libero volutpat sed cras.",
                 "012957746 whatsapp, 012957746 phone",
                 List.of(new ImageEntity("salesman", "1")), // Using List.of() for a single element
-                userRepository.findById(2L).orElseThrow()
+                userRepository.findById(3L).orElseThrow()
         );
 
         JobEntity cashier = new JobEntity(
@@ -191,7 +276,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Join our dynamic team as a Software Developer and help build cutting-edge solutions for our clients worldwide.",
                 "123-456-7890",
                 List.of(new ImageEntity("engineer", "1")), // Using List.of() for a single element
-                userRepository.findById(2L).orElseThrow()
+                userRepository.findById(4L).orElseThrow()
         );
 
         JobEntity job9 = new JobEntity(
@@ -207,7 +292,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Exciting opportunity for a talented Chef to showcase culinary skills in a renowned restaurant setting.",
                 "987-654-3210",
                 List.of(new ImageEntity("foodServer", "1")), // Using List.of() for a single element
-                userRepository.findById(1L).orElseThrow()
+                userRepository.findById(5L).orElseThrow()
         );
 
         JobEntity job10 = new JobEntity(
@@ -223,7 +308,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Passionate about swimming? Join us as a Swimming Instructor and teach the joy of swimming to all ages.",
                 "555-123-4567",
                 List.of(new ImageEntity("lifeguard", "1")), // Using List.of() for a single element
-                userRepository.findById(2L).orElseThrow()
+                userRepository.findById(6L).orElseThrow()
         );
 
         JobEntity job11 = new JobEntity(
@@ -239,7 +324,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Seeking a skilled Bartender to craft delicious cocktails and provide exceptional service in a vibrant pub environment.",
                 "321-654-9870",
                 List.of(new ImageEntity("barman", "1")), // Using List.of() for a single element
-                userRepository.findById(1L).orElseThrow()
+                userRepository.findById(7L).orElseThrow()
         );
 
         JobEntity job12 = new JobEntity(
@@ -255,7 +340,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Join our finance team as a Financial Analyst and drive strategic insights through comprehensive financial analysis.",
                 "777-888-9999",
                 List.of(new ImageEntity("accountant", "1")), // Using List.of() for a single element
-                userRepository.findById(2L).orElseThrow()
+                userRepository.findById(8L).orElseThrow()
         );
 
         JobEntity job13 = new JobEntity(
@@ -271,7 +356,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Exciting opportunity for a dynamic Marketing Manager to lead innovative marketing campaigns and drive business growth.",
                 "234-567-8901",
                 List.of(new ImageEntity("salesman", "1")), // Using List.of() for a single element
-                userRepository.findById(1L).orElseThrow()
+                userRepository.findById(9L).orElseThrow()
         );
 
         JobEntity job14 = new JobEntity(
@@ -287,7 +372,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "Join our team as a Housekeeping Supervisor and ensure cleanliness and comfort for our guests in a luxurious hotel setting.",
                 "456-789-0123",
                 List.of(new ImageEntity("maid", "1")), // Using List.of() for a single
-                userRepository.findById(2L).orElseThrow()
+                userRepository.findById(10L).orElseThrow()
         );
 
         // Save all predefined jobs
@@ -353,7 +438,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Talented UI/UX Designer needed to create intuitive and user-friendly interfaces for our mobile and web applications.",
                         "555-666-7777",
                         List.of(new ImageEntity("designer", "1")),
-                        userRepository.findById(2L).orElseThrow()
+                        userRepository.findById(3L).orElseThrow()
                 ),
                 new JobEntity(
                         "Network Engineer",
@@ -368,7 +453,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Skilled Network Engineer needed to maintain and optimize our company's network infrastructure.",
                         "888-999-0000",
                         List.of(new ImageEntity("engineer", "1")),
-                        userRepository.findById(1L).orElseThrow()
+                        userRepository.findById(4L).orElseThrow()
                 ),
                 new JobEntity(
                         "Digital Marketing Specialist",
@@ -383,7 +468,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Creative Digital Marketing Specialist needed to develop and execute online marketing strategies to enhance brand presence.",
                         "222-333-4444",
                         List.of(new ImageEntity("marketer", "1")),
-                        userRepository.findById(2L).orElseThrow()
+                        userRepository.findById(5L).orElseThrow()
                 ),
                 new JobEntity(
                         "System Administrator",
@@ -398,7 +483,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Experienced System Administrator needed to manage and maintain our IT systems and ensure optimal performance.",
                         "111-222-4444",
                         List.of(new ImageEntity("admin", "1")),
-                        userRepository.findById(1L).orElseThrow()
+                        userRepository.findById(6L).orElseThrow()
                 ),
                 new JobEntity(
                         "Content Writer",
@@ -413,7 +498,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Talented Content Writer needed to create engaging and informative content for our blog and social media channels.",
                         "555-666-8888",
                         List.of(new ImageEntity("writer", "1")),
-                        userRepository.findById(2L).orElseThrow()
+                        userRepository.findById(7L).orElseThrow()
                 ),
                 new JobEntity(
                         "HR Manager",
@@ -428,7 +513,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Dynamic HR Manager needed to oversee recruitment, employee relations, and compliance within our organization.",
                         "999-888-7777",
                         List.of(new ImageEntity("hr", "1")),
-                        userRepository.findById(1L).orElseThrow()
+                        userRepository.findById(8L).orElseThrow()
                 ),
                 new JobEntity(
                         "Customer Support Specialist",
@@ -443,7 +528,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "Friendly and dedicated Customer Support Specialist needed to assist our customers and ensure satisfaction with our services.",
                         "123-456-7890",
                         List.of(new ImageEntity("support", "1")),
-                        userRepository.findById(2L).orElseThrow()
+                        userRepository.findById(9L).orElseThrow()
                 )
         );
 
@@ -453,6 +538,14 @@ public class DatabaseInitializer implements CommandLineRunner {
     public void threadConfig() {
         UserEntity author1 = userRepository.findById(1L).orElseThrow();
         UserEntity author2 = userRepository.findById(2L).orElseThrow();
+        UserEntity author3 = userRepository.findById(3L).orElseThrow();
+        UserEntity author4 = userRepository.findById(4L).orElseThrow();
+        UserEntity author5 = userRepository.findById(5L).orElseThrow();
+        UserEntity author6 = userRepository.findById(6L).orElseThrow();
+        UserEntity author7 = userRepository.findById(7L).orElseThrow();
+        UserEntity author8 = userRepository.findById(8L).orElseThrow();
+        UserEntity author9 = userRepository.findById(9L).orElseThrow();
+        UserEntity author10 = userRepository.findById(10L).orElseThrow();
 
         // Create initial threads
         ThreadEntity thread1 = ThreadEntity.builder()
@@ -468,13 +561,13 @@ public class DatabaseInitializer implements CommandLineRunner {
                 .build();
 
         ThreadEntity thread3 = ThreadEntity.builder()
-                .author(author1)
+                .author(author3)
                 .threadTitle("Experience with Work Visas in Europe")
                 .threadContent("Share your experiences obtaining work visas in European countries. What challenges did you face?")
                 .build();
 
         ThreadEntity thread4 = ThreadEntity.builder()
-                .author(author2)
+                .author(author4)
                 .threadTitle("Opinions on Working Holiday Programs")
                 .threadContent("What are your opinions on working holiday programs? Which countries offer the best opportunities?")
                 .build();
@@ -487,7 +580,7 @@ public class DatabaseInitializer implements CommandLineRunner {
 
         // Insert followed threads for user 1 for the first 4 threads
         for (int i = 1; i <= 4; i++) {
-            jdbcTemplate.update("INSERT INTO followed_threads (thread_id, user_id) VALUES (?, ?)", i, 1L);
+            jdbcTemplate.update("INSERT INTO followed_threads (thread_id, user_id) VALUES (?, ?)", i, 2L);
         }
 
         // Create new threads discussing jobs or experiences based on images
@@ -528,7 +621,7 @@ public class DatabaseInitializer implements CommandLineRunner {
 
         // Update image_entity table for the first few threads (assuming you have ImageEntity objects)
         for (int i = 1; i <= 12; i++) {
-            jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = ?", i, i);
+            jdbcTemplate.update("UPDATE image_entity SET thread_id = ? WHERE id = ?", i, (i+2));
         }
     }
 

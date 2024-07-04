@@ -179,6 +179,7 @@ const ProfilePage: React.FC = () => {
   const onDeleteJob = (jobId: number) => {
     handleDeleteJob(jobId);
     setValue(!value);
+    fetchJobs();
   }
   const onOpenThread = (threadId: number) => {
     navigate(`/forum/thread/${threadId}`);
@@ -186,6 +187,7 @@ const ProfilePage: React.FC = () => {
   const onDeleteThread = (threadId: number) => {
     handleDeleteThread(threadId);
     setValue(!value);
+    fetchThreads();
   }
 
   const handleAddSkill = () => {

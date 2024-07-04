@@ -26,4 +26,9 @@ public class SkillEntity {
         skillDTO.setName(this.name);
         return skillDTO;
     }
+
+    public SkillEntity(String name, UserEntity user) {
+        this.name = name;
+        this.user = user;
+    }
 }

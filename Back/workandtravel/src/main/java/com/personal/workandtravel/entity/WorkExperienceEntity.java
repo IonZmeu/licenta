@@ -40,4 +40,13 @@ public class WorkExperienceEntity {
         workExperienceDTO.setEndDate(this.endDate);
         return workExperienceDTO;
     }
+
+    public WorkExperienceEntity(String company, String role, String description, LocalDateTime startDate, LocalDateTime endDate, UserEntity user) {
+        this.company = company;
+        this.role = role;
+        this.description = description;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.user = user;
+    }
 }

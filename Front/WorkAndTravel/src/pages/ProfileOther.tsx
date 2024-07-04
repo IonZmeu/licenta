@@ -42,6 +42,7 @@ const ProfileOther: React.FC = () => {
   const [username, setUsername] = useState<string>('');
   const userId = useParams<{ id?: string }>();
 
+  let { id } = useParams();
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
 
@@ -49,7 +50,7 @@ const ProfileOther: React.FC = () => {
       try {
         const userId = await localStorage.getItem('userId');
         if (userId) {
-          const response = await axios.get<ProfileDTOGet>(`http://localhost:4123/profile/${userId}`);
+          const response = await axios.get<ProfileDTOGet>(`http://localhost:4123/profile/${id}`);
           const profileData = response.data;
 
           if (isMounted) {

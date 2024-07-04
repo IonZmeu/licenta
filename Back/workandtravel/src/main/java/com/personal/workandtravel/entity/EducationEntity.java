@@ -4,6 +4,8 @@ import com.personal.workandtravel.dto.EducationDTO;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,6 +23,13 @@ public class EducationEntity {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    public EducationEntity(String degree, String institution, int year, UserEntity user) {
+        this.degree = degree;
+        this.institution = institution;
+        this.year = year;
+        this.user = user;
+    }
 
     public EducationDTO toDTO() {
         EducationDTO educationDTO = new EducationDTO();

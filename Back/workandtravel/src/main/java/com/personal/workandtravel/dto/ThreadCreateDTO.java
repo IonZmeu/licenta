@@ -13,6 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ThreadCreateDTO {
     private String userId;
     private String title;
-    private String description;
+    private String content;
     private MultipartFile[] images;
 }

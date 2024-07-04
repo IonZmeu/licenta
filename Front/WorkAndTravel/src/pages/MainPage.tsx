@@ -3,9 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import WorkIcon from '@mui/icons-material/Work';
 import ChatIcon from '@mui/icons-material/Chat';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import { useAppContext } from '../components/AppContext';
+import { useEffect } from 'react';
 
 const MainPage = () => {
   const navigate = useNavigate();
+  const { value, setValue } = useAppContext();
+
+  useEffect(() => {
+    setValue(!value);
+  }, []);
 
   return (
     <Container>

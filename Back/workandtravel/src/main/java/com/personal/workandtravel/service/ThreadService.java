@@ -148,7 +148,7 @@ public class ThreadService {
 
         ThreadEntity thread = new ThreadEntity(
                 threadCreateDTO.getTitle(),
-                threadCreateDTO.getDescription(),
+                threadCreateDTO.getContent(),
                 author,
                 imagePaths
         );
